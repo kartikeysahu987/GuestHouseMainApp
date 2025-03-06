@@ -12,6 +12,61 @@ import retrofit2.http.Header
 import retrofit2.http.POST
 
 var url: String = "https://guesthouseportalbackendiitr-production.up.railway.app/"
+// New data class for applicant details
+data class Applicant(
+    @SerializedName("name")
+    val name: String,
+    @SerializedName("designation")
+    val designation: String,
+    @SerializedName("department")
+    val department: String,
+    @SerializedName("code")
+    val code: String,
+    @SerializedName("mobile")
+    val mobile: String,
+    @SerializedName("email")
+    val email: String
+)
+
+// Updated CreateReservationRequest with applicant as an object and new fields reviewers and subroles
+data class CreateReservationRequest(
+    @SerializedName("numberOfGuests")
+    val numberOfGuests: Int,
+    @SerializedName("numberOfRooms")
+    val numberOfRooms: Int,
+    @SerializedName("roomType")
+    val roomType: String,
+    @SerializedName("purpose")
+    val purpose: String,
+    @SerializedName("guestName")
+    val guestName: String,
+    @SerializedName("arrivalDate")
+    val arrivalDate: String,  // format: "YYYY-MM-DD"
+    @SerializedName("arrivalTime")
+    val arrivalTime: String,  // format: "HH:mm"
+    @SerializedName("departureDate")
+    val departureDate: String,  // format: "YYYY-MM-DD"
+    @SerializedName("departureTime")
+    val departureTime: String,  // format: "HH:mm"
+    @SerializedName("address")
+    val address: String,
+    @SerializedName("category")
+    val category: String,
+    @SerializedName("source")
+    val source: String,
+    @SerializedName("applicant")
+    val applicant: Applicant?,
+    @SerializedName("reviewers")
+    val reviewers: String,
+    @SerializedName("subroles")
+    val subroles: String
+)
+
+// The CreateReservationResponse and the ApiService remain the same.
+data class CreateReservationResponse(
+    @SerializedName("message")
+    val message: String
+)
 
 // --- OTP Endpoints ---
 data class OtpRequest(
@@ -107,40 +162,6 @@ data class Reservation(
     val status: String?
 )
 
-// Data classes for creating a reservation
-data class CreateReservationRequest(
-    @SerializedName("numberOfGuests")
-    val numberOfGuests: Int,
-    @SerializedName("numberOfRooms")
-    val numberOfRooms: Int,
-    @SerializedName("roomType")
-    val roomType: String,
-    @SerializedName("purpose")
-    val purpose: String,
-    @SerializedName("guestName")
-    val guestName: String,
-    @SerializedName("arrivalDate")
-    val arrivalDate: String,  // format: "YYYY-MM-DD"
-    @SerializedName("arrivalTime")
-    val arrivalTime: String,  // format: "HH:mm"
-    @SerializedName("departureDate")
-    val departureDate: String,  // format: "YYYY-MM-DD"
-    @SerializedName("departureTime")
-    val departureTime: String,  // format: "HH:mm"
-    @SerializedName("address")
-    val address: String,
-    @SerializedName("category")
-    val category: String,
-    @SerializedName("source")
-    val source: String,
-    @SerializedName("applicant")
-    val applicant: String? = null // optional field
-)
-
-data class CreateReservationResponse(
-    @SerializedName("message")
-    val message: String
-)
 
 interface AuthService {
     @POST("auth/otp")
