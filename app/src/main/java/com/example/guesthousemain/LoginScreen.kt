@@ -1,9 +1,9 @@
+// File: LoginScreen.kt
 package com.example.guesthousemain.ui
 
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -11,7 +11,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,7 +51,7 @@ fun LoginScreen(navController: NavHostController) {
                 onClick = {
                     if (email.isNotEmpty()) {
                         isDisabled = true
-                        // Call your Railway endpoint to send OTP
+                        // Call your Node.js endpoint to send OTP
                         ApiService.authService.sendOtp(OtpRequest(email))
                             .enqueue(object : Callback<OtpResponse> {
                                 override fun onResponse(

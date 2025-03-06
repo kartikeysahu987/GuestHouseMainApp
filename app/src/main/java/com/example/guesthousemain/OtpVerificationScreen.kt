@@ -4,7 +4,6 @@ import android.os.CountDownTimer
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -18,10 +17,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.guesthousemain.network.ApiService
+import com.example.guesthousemain.network.LoginRequest
+import com.example.guesthousemain.network.LoginResponse
 import com.example.guesthousemain.network.OtpRequest
 import com.example.guesthousemain.network.OtpResponse
 import com.example.guesthousemain.network.OtpVerifyRequest
 import com.example.guesthousemain.network.OtpVerifyResponse
+import com.example.guesthousemain.util.SessionManager
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -69,9 +71,9 @@ fun OtpVerificationScreen(navController: NavHostController, email: String) {
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = {
-                    // Call your OTP verification endpoint
                     if (otp.isNotEmpty()) {
                         isDisabled = true
+                        // First, verify the OTP
                         ApiService.authService.verifyOtp(
                             OtpVerifyRequest(email, otp)
                         ).enqueue(object : Callback<OtpVerifyResponse> {
@@ -81,18 +83,75 @@ fun OtpVerificationScreen(navController: NavHostController, email: String) {
                             ) {
                                 isDisabled = false
                                 if (response.isSuccessful && response.body() != null) {
-                                    if (response.body()!!.success == true) {
-                                        Toast.makeText(
-                                            context,
-                                            "OTP verified successfully",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                        navController.navigate("register/$email")
-                                        // Proceed further or navigate to the next screen
+                                    val verifyResponse = response.body()!!
+                                    if (verifyResponse.success == true) {
+                                        if (!verifyResponse.user.isNullOrEmpty()) {
+                                            // User exists: call login route to update tokens.
+                                            Toast.makeText(
+                                                context,
+                                                "OTP verified. Logging in...",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            ApiService.authService.loginUser(
+                                                LoginRequest(email, otp)
+                                            ).enqueue(object : Callback<LoginResponse> {
+                                                override fun onResponse(
+                                                    call: Call<LoginResponse>,
+                                                    response: Response<LoginResponse>
+                                                ) {
+                                                    if (response.isSuccessful && response.body() != null) {
+                                                        val loginResponse = response.body()!!
+                                                        if (loginResponse.success) {
+                                                            // Store tokens persistently with "Bearer " prefix.
+                                                            SessionManager.saveTokens(
+                                                                context,
+                                                                "Bearer " + (loginResponse.accessToken ?: ""),
+                                                                "Bearer " + (loginResponse.refreshToken ?: "")
+                                                            )
+                                                            Toast.makeText(
+                                                                context,
+                                                                "Login successful",
+                                                                Toast.LENGTH_SHORT
+                                                            ).show()
+                                                            navController.navigate("main") {
+                                                                popUpTo("login") { inclusive = true }
+                                                            }
+                                                        } else {
+                                                            Toast.makeText(
+                                                                context,
+                                                                loginResponse.message ?: "Login failed",
+                                                                Toast.LENGTH_SHORT
+                                                            ).show()
+                                                        }
+                                                    } else {
+                                                        Toast.makeText(
+                                                            context,
+                                                            "Login error: ${response.message()}",
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                    }
+                                                }
+                                                override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+                                                    Toast.makeText(
+                                                        context,
+                                                        "Login failure: ${t.localizedMessage}",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                }
+                                            })
+                                        } else {
+                                            // User doesn't exist: navigate to registration.
+                                            Toast.makeText(
+                                                context,
+                                                "OTP verified. Proceed to registration.",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            navController.navigate("register/$email")
+                                        }
                                     } else {
                                         Toast.makeText(
                                             context,
-                                            response.body()?.message ?: "Verification failed",
+                                            verifyResponse.message ?: "Verification failed",
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     }
@@ -125,7 +184,6 @@ fun OtpVerificationScreen(navController: NavHostController, email: String) {
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = {
-                    // Resend OTP logic: call the sendOtp endpoint
                     isTimerRunning = true
                     countdownTimer.start()
                     ApiService.authService.sendOtp(OtpRequest(email))
