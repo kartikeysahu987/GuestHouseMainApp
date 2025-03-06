@@ -1,58 +1,71 @@
 package com.example.guesthousemain.ui.theme
 
-import android.app.Activity
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
+// Color Palette: A harmonious, accessible set of colors.
+// Primary: Deep Blue for main actions and headers.
+// Secondary: Amber for emphasis and indicators.
+// Tertiary (Accent): Cyan for highlights.
+// Background: Light Grey to ensure readability.
+private val PrimaryColor = Color(0xFF0D47A1)       // Deep Blue
+private val SecondaryColor = Color(0xFFFFA000)     // Amber
+private val AccentColor = Color(0xFF00BCD4)        // Cyan
+private val BackgroundColor = Color(0xFFF5F5F5)    // Light Grey
+private val SurfaceColor = Color(0xFFFFFFFF)       // White
 
+// Text colors for high contrast.
+private val OnPrimaryColor = Color.White
+private val OnSecondaryColor = Color.Black
+private val OnBackgroundColor = Color.Black
+private val OnSurfaceColor = Color.Black
+
+// Define a custom light color scheme.
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = PrimaryColor,
+    secondary = SecondaryColor,
+    tertiary = AccentColor,
+    background = BackgroundColor,
+    surface = SurfaceColor,
+    onPrimary = OnPrimaryColor,
+    onSecondary = OnSecondaryColor,
+    onBackground = OnBackgroundColor,
+    onSurface = OnSurfaceColor
 )
 
+// Typography: Modern and clean fonts with clear hierarchy.
+private val AppTypography = Typography(
+    displayLarge = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontSize = 36.sp,
+        fontWeight = FontWeight.Bold
+    ),
+    headlineSmall = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontSize = 20.sp,
+        fontWeight = FontWeight.Bold
+    ),
+    bodyLarge = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontSize = 16.sp
+    ),
+    bodyMedium = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontSize = 14.sp
+    )
+)
+
+// Custom theme applying the color scheme and typography.
 @Composable
-fun GuestHouseMainTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
-    content: @Composable () -> Unit
-) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
-
+fun MyAppTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
+        colorScheme = LightColorScheme,
+        typography = AppTypography,
         content = content
     )
 }

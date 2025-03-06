@@ -1,16 +1,34 @@
 package com.example.guesthousemain.ui.screens
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.guesthousemain.network.ApiService
@@ -18,53 +36,141 @@ import com.example.guesthousemain.network.CreateReservationRequest
 import com.example.guesthousemain.network.CreateReservationResponse
 import com.example.guesthousemain.network.Reservation
 import com.example.guesthousemain.util.SessionManager
+import com.example.guesthousemain.ui.theme.MyAppTheme
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Cancel
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.HourglassEmpty
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 
-@OptIn(ExperimentalMaterial3Api::class)
+// Custom background composable with a gradient and optional image overlay.
+// Replace the commented Image composable with your custom image if available.
+@Composable
+fun CustomBackground(content: @Composable BoxScope.() -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                        MaterialTheme.colorScheme.background
+                    )
+                )
+            )
+    ) {
+        // Uncomment and replace with your custom image asset if needed:
+        // Image(
+        //     painter = painterResource(id = R.drawable.custom_background),
+        //     contentDescription = "Background Image",
+        //     modifier = Modifier.fillMaxSize(),
+        //     contentScale = ContentScale.Crop
+        // )
+        content()
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun ReservationScreen() {
-    // Titles for the four tabs
-    val tabTitles = listOf(
-        "Approved Request",
-        "Pending Request",
-        "Rejected Request",
-        "Reservation Form"
-    )
-    var selectedTabIndex by remember { mutableStateOf(0) }
+    MyAppTheme {
+        // Wrap the whole UI in a custom background for added depth.
+        CustomBackground {
+            val tabTitles = listOf("Reservation Form", "Approved", "Pending", "Rejected")
+            var selectedTabIndex by remember { mutableStateOf(0) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Reservation Dashboard") },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary)
-            )
-        }
-    ) { innerPadding ->
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(innerPadding)
-        ) {
-            TabRow(selectedTabIndex = selectedTabIndex) {
-                tabTitles.forEachIndexed { index, title ->
-                    Tab(
-                        selected = selectedTabIndex == index,
-                        onClick = { selectedTabIndex = index },
-                        text = { Text(text = title) }
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                "Reservation Dashboard",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        ),
+                        modifier = Modifier.shadow(4.dp)
                     )
                 }
-            }
-            when (selectedTabIndex) {
-                0 -> ApprovedRequestContent()
-                1 -> PendingRequestContent()
-                2 -> RejectedRequestContent()
-                3 -> ReservationFormContent()
+            ) { innerPadding ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .background(MaterialTheme.colorScheme.background)
+                ) {
+                    // Tab navigation with custom indicator and rounded corners.
+                    TabRow(
+                        selectedTabIndex = selectedTabIndex,
+                        indicator = { tabPositions ->
+                            TabRowDefaults.Indicator(
+                                Modifier
+                                    .tabIndicatorOffset(tabPositions[selectedTabIndex])
+                                    .background(
+                                        MaterialTheme.colorScheme.secondary,
+                                        shape = RoundedCornerShape(50)
+                                    )
+                            )
+                        }
+                    ) {
+                        tabTitles.forEachIndexed { index, title ->
+                            Tab(
+                                selected = selectedTabIndex == index,
+                                onClick = { selectedTabIndex = index },
+                                text = {
+                                    Text(
+                                        text = title,
+                                        fontSize = 14.sp,
+                                        fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (selectedTabIndex == index)
+                                            MaterialTheme.colorScheme.primary
+                                        else
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                },
+                                modifier = Modifier
+                                    .background(
+                                        if (selectedTabIndex == index)
+                                            MaterialTheme.colorScheme.secondaryContainer
+                                        else Color.Transparent,
+                                        shape = RoundedCornerShape(16.dp)
+                                    )
+                            )
+                        }
+                    }
+
+                    // Smooth animated content switching for an enhanced user experience.
+                    AnimatedContent(
+                        targetState = selectedTabIndex,
+                        transitionSpec = {
+                            ContentTransform(
+                                targetContentEnter = fadeIn(animationSpec = tween(300)),
+                                initialContentExit = fadeOut(animationSpec = tween(300))
+                            )
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    ) { index ->
+                        when (index) {
+                            0 -> ReservationFormContent()
+                            1 -> ApprovedRequestContent()
+                            2 -> PendingRequestContent()
+                            3 -> RejectedRequestContent()
+                        }
+                    }
+                }
             }
         }
     }
 }
 
+// Approved reservations content with clear header and icon.
 @Composable
 fun ApprovedRequestContent() {
     ReservationListContent(
@@ -74,10 +180,13 @@ fun ApprovedRequestContent() {
                 SessionManager.refreshToken
             )
         },
-        emptyMessage = "No approved reservations found."
+        emptyMessage = "No approved reservations found.",
+        title = "Approved Reservations",
+        icon = Icons.Outlined.CheckCircle
     )
 }
 
+// Pending reservations content.
 @Composable
 fun PendingRequestContent() {
     ReservationListContent(
@@ -87,10 +196,13 @@ fun PendingRequestContent() {
                 SessionManager.refreshToken
             )
         },
-        emptyMessage = "No pending reservations found."
+        emptyMessage = "No pending reservations found.",
+        title = "Pending Reservations",
+        icon = Icons.Outlined.HourglassEmpty
     )
 }
 
+// Rejected reservations content.
 @Composable
 fun RejectedRequestContent() {
     ReservationListContent(
@@ -100,10 +212,13 @@ fun RejectedRequestContent() {
                 SessionManager.refreshToken
             )
         },
-        emptyMessage = "No rejected reservations found."
+        emptyMessage = "No rejected reservations found.",
+        title = "Rejected Reservations",
+        icon = Icons.Outlined.Cancel
     )
 }
 
+// Reservation form section with a card and modern styling.
 @Composable
 fun ReservationFormContent() {
     Box(
@@ -111,23 +226,44 @@ fun ReservationFormContent() {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // Wrap the form inside a Card to add an elevated look.
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(8.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .shadow(8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
         ) {
-            ReservationFormScreen()
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Header with an icon and styled text.
+                Text(
+                    text = "📝 Make a Reservation",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    ),
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Divider(color = MaterialTheme.colorScheme.primary, thickness = 2.dp)
+                Spacer(modifier = Modifier.height(12.dp))
+                ReservationFormScreen()
+            }
         }
     }
 }
 
-/**
- * A composable that fetches and displays a list of reservations.
- */
+// Reusable list component to display reservations with loading animations and accessible content.
 @Composable
 fun ReservationListContent(
     fetchReservations: () -> Call<List<Reservation>>,
-    emptyMessage: String
+    emptyMessage: String,
+    title: String,
+    icon: ImageVector
 ) {
     val context = LocalContext.current
     var reservations by remember { mutableStateOf<List<Reservation>?>(null) }
@@ -154,33 +290,94 @@ fun ReservationListContent(
         })
     }
 
-    if (isLoading) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Section header with icon and title.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = "$title Icon",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = title,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
-    } else {
-        reservations?.let { list ->
-            if (list.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = emptyMessage, fontSize = 20.sp)
-                }
-            } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(list) { reservation ->
-                        Text(
-                            text = "ID: ${reservation.id} | Email: ${reservation.guestEmail} | Status: ${reservation.status}",
-                            modifier = Modifier.padding(8.dp),
-                            fontSize = 16.sp
-                        )
+
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            reservations?.let { list ->
+                if (list.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(text = emptyMessage, fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(vertical = 8.dp)
+                    ) {
+                        items(list) { reservation ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .clickable { /* Add interaction if needed */ },
+                                elevation = CardDefaults.cardElevation(4.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surface
+                                )
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        text = "ID: ${reservation.id}",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp
+                                    )
+                                    Text(
+                                        text = "Guest Email: ${reservation.guestEmail}",
+                                        fontSize = 14.sp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = "Status: ${reservation.status}",
+                                        fontSize = 14.sp,
+                                        color = when (reservation.status) {
+                                            "Approved" -> Color.Green
+                                            "Pending" -> Color.Yellow
+                                            "Rejected" -> Color.Red
+                                            else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                        },
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
+            } ?: Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(text = "No data.", fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-        } ?: Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(text = "No data.", fontSize = 20.sp)
         }
     }
 }
 
+// Reservation form with scrollable fields, subtle button animations, and form validation.
 @Composable
 fun ReservationFormScreen() {
     val context = LocalContext.current
@@ -202,7 +399,6 @@ fun ReservationFormScreen() {
 
     var isLoading by remember { mutableStateOf(false) }
 
-    // Use a vertically scrollable Column for the form fields
     Column(
         modifier = Modifier
             .fillMaxWidth()
