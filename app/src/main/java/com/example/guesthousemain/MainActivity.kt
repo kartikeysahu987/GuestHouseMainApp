@@ -1,9 +1,11 @@
 package com.example.guesthousemain
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -16,12 +18,16 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.guesthousemain.ui.LoginScreen
 import com.example.guesthousemain.ui.MainPageScreen
+//import com.example.guesthousemain.ui.MainPageScreen
 import com.example.guesthousemain.ui.OtpVerificationScreen
 import com.example.guesthousemain.ui.RegisterScreen
+import com.example.guesthousemain.ui.screens.HomeScreen
+import com.example.guesthousemain.ui.screens.ReservationFormScreen
 import com.example.guesthousemain.ui.theme.GuestHouseMainTheme
 import com.example.guesthousemain.util.SessionManager
 
 class MainActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -45,6 +51,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AppNavigation(startDestination: String) {
     val globalNavController = rememberNavController()
@@ -68,6 +75,13 @@ fun AppNavigation(startDestination: String) {
         }
         composable("main") {
             MainPageScreen(globalNavController)
+        }
+        composable("reservation_form"){
+            ReservationFormScreen()
+
+        }
+        composable("home"){
+            HomeScreen(globalNavController)
         }
     }
 }

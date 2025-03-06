@@ -40,20 +40,19 @@ android {
 }
 
 dependencies {
-    // Retrofit dependencies
-    implementation ("com.squareup.okhttp3:logging-interceptor:4.9.3")
-
-    implementation ("com.squareup.okhttp3:okhttp:4.9.3")
+    // Network
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:4.9.3")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.9.3")
 
-
+    // Compose
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
     implementation("io.coil-kt:coil-compose:2.2.2")
-    implementation("androidx.core:core-ktx:1.15.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+    implementation("com.google.accompanist:accompanist-pager:0.28.0")
+    implementation("com.google.accompanist:accompanist-pager-indicators:0.28.0")
 
-    // Other dependencies from your version catalog
+    // Version Catalog Dependencies
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -64,6 +63,8 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.appcompat)
+
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
