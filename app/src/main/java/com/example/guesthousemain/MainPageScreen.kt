@@ -1,6 +1,8 @@
 package com.example.guesthousemain.ui
 
 import ContactScreen
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,6 +25,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -62,6 +65,7 @@ fun GuestHouseApp(content: @Composable () -> Unit) {
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainPageScreen(globalNavController: NavHostController) {
@@ -328,6 +332,58 @@ fun ModernBottomNavigation(navController: NavHostController, items: List<BottomN
 }
 
 @Composable
+fun WelcomeSection() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        // Main Heading
+        Text(
+            text = "Welcome to IIT Ropar's Guest House",
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontWeight = FontWeight.Bold
+            )
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Subheading: The Guest House
+        Text(
+            text = "The Guest House",
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.SemiBold,
+                textDecoration = TextDecoration.Underline
+            )
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Paragraph about the Guest House
+        Text(
+            text = "Nestled within the greenery of IIT Ropar's campus, the guest house offers a welcoming retreat for visitors. With its modern design blending seamlessly with the serene environment, it provides a comfortable and inviting atmosphere. Each room is well-appointed, combining tasteful decor with cozy furnishings for a relaxing stay. Whether guests are enjoying a peaceful walk through the gardens or focusing on academic endeavors, the guest house ensures a pleasant experience filled with comfort and hospitality.",
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Subheading: The Campus
+        Text(
+            text = "The Campus",
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.SemiBold,
+                textDecoration = TextDecoration.Underline
+            )
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Paragraph about the Campus
+        Text(
+            text = "Nestled in the heart of Punjab's Rupnagar district, the campus of the Indian Institute of Technology, Ropar, is a blend of modern architecture and natural beauty spread across 500 acres. Walking through its green pathways, surrounded by lush trees and colorful flora, offers a sense of tranquility away from the outside world. The campus boasts sleek, contemporary buildings housing cutting-edge facilities for academics, research, and student life. Recreational spaces provide areas for students to relax and socialize amidst the serene surroundings. Sustainability efforts are evident throughout, showcasing a commitment to environmental conservation. From academic pursuits to cultural events, the campus buzzes with activity, creating a vibrant community where learning and growth thrive.",
+            style = MaterialTheme.typography.bodyLarge
+        )
+    }
+}
+
+
+@Composable
 fun HomeScreen(navController: NavHostController) {
     // Using your existing images from the drawable folder
     val imageResources = listOf(
@@ -463,21 +519,7 @@ fun HomeScreen(navController: NavHostController) {
             }
         }
 
-        // Welcome text
-        Text(
-            text = "Welcome to IIT Ropar Guest House",
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontWeight = FontWeight.Bold
-            )
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Description
-        Text(
-            text = "Enjoy a comfortable stay with modern amenities, great dining, and friendly staff. Whether you're here for a conference, family vacation, or just passing through, we strive to make your experience memorable and relaxing.",
-            style = MaterialTheme.typography.bodyLarge
-        )
+        WelcomeSection()
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -489,8 +531,8 @@ fun HomeScreen(navController: NavHostController) {
             // Rooms card
             FeatureCard(
                 icon = Icons.Outlined.LocationOn,
-                title = "Rooms",
-                description = "Comfortable rooms for every budget.",
+                title = "Location",
+                description = "Indian Institute of Technology,Ropar.",
                 modifier = Modifier.weight(1f)
             )
 
@@ -510,7 +552,7 @@ fun HomeScreen(navController: NavHostController) {
             FeatureCard(
                 icon = Icons.Outlined.Info,
                 title = "About",
-                description = "Learn more about our story.",
+                description = "Learn more about us.",
                 modifier = Modifier.weight(1f)
             )
         }
