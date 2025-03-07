@@ -261,7 +261,7 @@ fun ReservationScreen() {
                                                     selectedTabIndex--
 
                                                     // Add a small delay before allowing another swipe
-                                                    delay(300)
+                                                    delay(100)
                                                     isSwipeInProgress = false
                                                 }
                                             }

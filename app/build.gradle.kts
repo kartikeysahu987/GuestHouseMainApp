@@ -51,6 +51,8 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.2.2")
     implementation("com.google.accompanist:accompanist-pager:0.28.0")
     implementation("com.google.accompanist:accompanist-pager-indicators:0.28.0")
+    // In your app/build.gradle file
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
 
     // Version Catalog Dependencies
     implementation(libs.androidx.core.ktx)

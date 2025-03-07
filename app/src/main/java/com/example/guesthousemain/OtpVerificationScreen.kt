@@ -11,10 +11,12 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Lock
@@ -37,6 +39,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -315,6 +318,8 @@ fun OTPTextField(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OtpVerificationScreen(navController: NavHostController, email: String) {
+    // Add a scrollable state
+    val scrollState = rememberScrollState()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -381,8 +386,23 @@ fun OtpVerificationScreen(navController: NavHostController, email: String) {
         R.drawable.lhc
     )
 
+    // Handle keyboard visibility
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            // Add imePadding to handle keyboard properly
+            .imePadding()
+            // Add clickable with no ripple to allow dismissing keyboard when clicking outside
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) {
+                keyboardController?.hide()
+                focusManager.clearFocus()
+            }
     ) {
         SlidingBackgroundOtp(imageList)
 
@@ -408,9 +428,11 @@ fun OtpVerificationScreen(navController: NavHostController, email: String) {
                 .graphicsLayer { translationY = yOffset.value },
             contentAlignment = Alignment.Center
         ) {
+            // Add scrollable container
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(scrollState)
                     .padding(24.dp),
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -550,6 +572,9 @@ fun OtpVerificationScreen(navController: NavHostController, email: String) {
 
                         Button(
                             onClick = {
+                                // Hide keyboard when button is clicked
+                                keyboardController?.hide()
+
                                 if (otp.length == 6) {
                                     isVerifying = true
                                     // Call API to verify OTP
@@ -735,6 +760,9 @@ fun OtpVerificationScreen(navController: NavHostController, email: String) {
                         // Resend button with timer
                         Button(
                             onClick = {
+                                // Hide keyboard when button is clicked
+                                keyboardController?.hide()
+
                                 isTimerRunning = true
                                 timerProgress = 1f
                                 countdownTimer?.cancel()
@@ -828,6 +856,9 @@ fun OtpVerificationScreen(navController: NavHostController, email: String) {
                         }
                     }
                 }
+
+                // Add extra padding at the bottom to ensure content is accessible when keyboard is shown
+                Spacer(modifier = Modifier.height(80.dp))
             }
         }
     }
