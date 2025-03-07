@@ -161,6 +161,13 @@ data class Reservation(
     @SerializedName("status")
     val status: String?
 )
+data class GoogleSignInRequest(
+    @SerializedName("idToken")
+    val idToken: String,
+    @SerializedName("email")
+    val email: String
+)
+
 
 
 interface AuthService {
@@ -175,6 +182,9 @@ interface AuthService {
 
     @POST("auth/register")
     fun registerUser(@Body request: RegisterUserRequest): Call<RegisterUserResponse>
+
+    @POST("auth/googleLogin")
+    fun googleSignIn(@Body request: GoogleSignInRequest): Call<LoginResponse>
 
     @GET("reservation/pending")
     fun getPendingReservations(

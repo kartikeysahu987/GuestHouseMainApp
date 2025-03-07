@@ -34,6 +34,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Calendar
 
 @RequiresApi(Build.VERSION_CODES.O)
+//@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReservationFormScreen() {
@@ -68,6 +69,19 @@ fun ReservationFormScreen() {
     var applicantMobile by remember { mutableStateOf("") }
     var applicantEmail by remember { mutableStateOf("") }
 
+    // Error state variables
+    var guestNameError by remember { mutableStateOf(false) }
+    var purposeError by remember { mutableStateOf(false) }
+    var addressError by remember { mutableStateOf(false) }
+    var applicantNameError by remember { mutableStateOf(false) }
+    var applicantDesignationError by remember { mutableStateOf(false) }
+    var applicantDepartmentError by remember { mutableStateOf(false) }
+    var applicantCodeError by remember { mutableStateOf(false) }
+    var applicantMobileError by remember { mutableStateOf(false) }
+    var applicantMobileFormatError by remember { mutableStateOf(false) }
+    var applicantEmailError by remember { mutableStateOf(false) }
+    var applicantEmailFormatError by remember { mutableStateOf(false) }
+
     var reviewer by remember { mutableStateOf("") }
     var reviewerExpanded by remember { mutableStateOf(false) }
     val reviewerOptionsA = listOf("Director", "Registar", "Associate Dean", "Dean")
@@ -84,6 +98,40 @@ fun ReservationFormScreen() {
     }
 
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+    // Validation functions
+    val validatePhoneNumber: (String) -> Boolean = { phone ->
+        phone.length == 10 && phone.all { it.isDigit() }
+    }
+
+    val validateEmail: (String) -> Boolean = { email ->
+        email.endsWith("@iitrpr.ac.in") && email.contains("@") && email.indexOf("@") > 0
+    }
+
+    val validateFields: () -> Boolean = {
+        // Reset all error states
+        guestNameError = guestName.isBlank()
+        purposeError = purpose.isBlank()
+        addressError = address.isBlank()
+        applicantNameError = applicantName.isBlank()
+        applicantDesignationError = applicantDesignation.isBlank()
+        applicantDepartmentError = applicantDepartment.isBlank()
+        applicantCodeError = applicantCode.isBlank()
+
+        // Phone validation
+        applicantMobileError = applicantMobile.isBlank()
+        applicantMobileFormatError = !applicantMobile.isBlank() && !validatePhoneNumber(applicantMobile)
+
+        // Email validation
+        applicantEmailError = applicantEmail.isBlank()
+        applicantEmailFormatError = !applicantEmail.isBlank() && !validateEmail(applicantEmail)
+
+        // Return true only if all validations pass
+        !guestNameError && !purposeError && !addressError &&
+                !applicantNameError && !applicantDesignationError && !applicantDepartmentError &&
+                !applicantCodeError && !applicantMobileError && !applicantMobileFormatError &&
+                !applicantEmailError && !applicantEmailFormatError
+    }
 
     Column(
         modifier = Modifier
@@ -110,6 +158,11 @@ fun ReservationFormScreen() {
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Text(
+                    text = "* All fields are mandatory",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
             }
         }
 
@@ -123,7 +176,7 @@ fun ReservationFormScreen() {
                 OutlinedTextField(
                     value = category,
                     onValueChange = {},
-                    label = { Text("Category") },
+                    label = { Text("Category *") },
                     readOnly = true,
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
                     modifier = Modifier
@@ -160,7 +213,7 @@ fun ReservationFormScreen() {
                 OutlinedTextField(
                     value = roomType,
                     onValueChange = {},
-                    label = { Text("Room Type") },
+                    label = { Text("Room Type *") },
                     readOnly = true,
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = roomTypeExpanded) },
                     modifier = Modifier
@@ -192,31 +245,51 @@ fun ReservationFormScreen() {
                 OutlinedTextField(
                     value = noOfGuests,
                     onValueChange = { noOfGuests = it },
-                    label = { Text("Guests") },
-                    modifier = Modifier.weight(1f)
+                    label = { Text("Guests *") },
+                    modifier = Modifier.weight(1f),
+                    isError = noOfGuests.isBlank()
                 )
                 OutlinedTextField(
                     value = noOfRooms,
                     onValueChange = { noOfRooms = it },
-                    label = { Text("Rooms") },
-                    modifier = Modifier.weight(1f)
+                    label = { Text("Rooms *") },
+                    modifier = Modifier.weight(1f),
+                    isError = noOfRooms.isBlank()
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
 
             OutlinedTextField(
                 value = guestName,
-                onValueChange = { guestName = it },
-                label = { Text("Guest Name") },
-                modifier = Modifier.fillMaxWidth()
+                onValueChange = {
+                    guestName = it
+                    guestNameError = it.isBlank()
+                },
+                label = { Text("Guest Name *") },
+                modifier = Modifier.fillMaxWidth(),
+                isError = guestNameError,
+                supportingText = {
+                    if (guestNameError) {
+                        Text("Guest name is required")
+                    }
+                }
             )
             Spacer(modifier = Modifier.height(12.dp))
 
             OutlinedTextField(
                 value = purpose,
-                onValueChange = { purpose = it },
-                label = { Text("Purpose of Visit") },
-                modifier = Modifier.fillMaxWidth()
+                onValueChange = {
+                    purpose = it
+                    purposeError = it.isBlank()
+                },
+                label = { Text("Purpose of Visit *") },
+                modifier = Modifier.fillMaxWidth(),
+                isError = purposeError,
+                supportingText = {
+                    if (purposeError) {
+                        Text("Purpose is required")
+                    }
+                }
             )
         }
 
@@ -229,13 +302,13 @@ fun ReservationFormScreen() {
             ) {
                 DatePickerTextField(
                     value = arrivalDate,
-                    label = "Arrival Date",
+                    label = "Arrival Date *",
                     onDateSelected = { arrivalDate = it },
                     modifier = Modifier.weight(1f)
                 )
                 TimePickerTextField(
                     value = arrivalTime,
-                    label = "Arrival Time",
+                    label = "Arrival Time *",
                     onTimeSelected = { arrivalTime = it },
                     modifier = Modifier.weight(1f)
                 )
@@ -249,13 +322,13 @@ fun ReservationFormScreen() {
             ) {
                 DatePickerTextField(
                     value = departureDate,
-                    label = "Departure Date",
+                    label = "Departure Date *",
                     onDateSelected = { departureDate = it },
                     modifier = Modifier.weight(1f)
                 )
                 TimePickerTextField(
                     value = departureTime,
-                    label = "Departure Time",
+                    label = "Departure Time *",
                     onTimeSelected = { departureTime = it },
                     modifier = Modifier.weight(1f)
                 )
@@ -272,16 +345,25 @@ fun ReservationFormScreen() {
         FormSection(title = "Additional Information") {
             OutlinedTextField(
                 value = address,
-                onValueChange = { address = it },
-                label = { Text("Address") },
-                modifier = Modifier.fillMaxWidth()
+                onValueChange = {
+                    address = it
+                    addressError = it.isBlank()
+                },
+                label = { Text("Address *") },
+                modifier = Modifier.fillMaxWidth(),
+                isError = addressError,
+                supportingText = {
+                    if (addressError) {
+                        Text("Address is required")
+                    }
+                }
             )
             Spacer(modifier = Modifier.height(12.dp))
 
             OutlinedTextField(
                 value = source,
                 onValueChange = { source = it },
-                label = { Text("Source") },
+                label = { Text("Source *") },
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -290,9 +372,18 @@ fun ReservationFormScreen() {
         FormSection(title = "Applicant Information") {
             OutlinedTextField(
                 value = applicantName,
-                onValueChange = { applicantName = it },
-                label = { Text("Name") },
-                modifier = Modifier.fillMaxWidth()
+                onValueChange = {
+                    applicantName = it
+                    applicantNameError = it.isBlank()
+                },
+                label = { Text("Name *") },
+                modifier = Modifier.fillMaxWidth(),
+                isError = applicantNameError,
+                supportingText = {
+                    if (applicantNameError) {
+                        Text("Name is required")
+                    }
+                }
             )
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -302,24 +393,51 @@ fun ReservationFormScreen() {
             ) {
                 OutlinedTextField(
                     value = applicantDesignation,
-                    onValueChange = { applicantDesignation = it },
-                    label = { Text("Designation") },
-                    modifier = Modifier.weight(1f)
+                    onValueChange = {
+                        applicantDesignation = it
+                        applicantDesignationError = it.isBlank()
+                    },
+                    label = { Text("Designation *") },
+                    modifier = Modifier.weight(1f),
+                    isError = applicantDesignationError,
+                    supportingText = {
+                        if (applicantDesignationError) {
+                            Text("Required")
+                        }
+                    }
                 )
                 OutlinedTextField(
                     value = applicantDepartment,
-                    onValueChange = { applicantDepartment = it },
-                    label = { Text("Department") },
-                    modifier = Modifier.weight(1f)
+                    onValueChange = {
+                        applicantDepartment = it
+                        applicantDepartmentError = it.isBlank()
+                    },
+                    label = { Text("Department *") },
+                    modifier = Modifier.weight(1f),
+                    isError = applicantDepartmentError,
+                    supportingText = {
+                        if (applicantDepartmentError) {
+                            Text("Required")
+                        }
+                    }
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
 
             OutlinedTextField(
                 value = applicantCode,
-                onValueChange = { applicantCode = it },
-                label = { Text("Employee Code") },
-                modifier = Modifier.fillMaxWidth()
+                onValueChange = {
+                    applicantCode = it
+                    applicantCodeError = it.isBlank()
+                },
+                label = { Text("Employee Code *") },
+                modifier = Modifier.fillMaxWidth(),
+                isError = applicantCodeError,
+                supportingText = {
+                    if (applicantCodeError) {
+                        Text("Employee code is required")
+                    }
+                }
             )
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -329,15 +447,41 @@ fun ReservationFormScreen() {
             ) {
                 OutlinedTextField(
                     value = applicantMobile,
-                    onValueChange = { applicantMobile = it },
-                    label = { Text("Mobile") },
-                    modifier = Modifier.weight(1f)
+                    onValueChange = {
+                        applicantMobile = it
+                        applicantMobileError = it.isBlank()
+                        if (!it.isBlank()) {
+                            applicantMobileFormatError = !validatePhoneNumber(it)
+                        }
+                    },
+                    label = { Text("Mobile *") },
+                    modifier = Modifier.weight(1f),
+                    isError = applicantMobileError || applicantMobileFormatError,
+                    supportingText = {
+                        when {
+                            applicantMobileError -> Text("Mobile number is required")
+                            applicantMobileFormatError -> Text("Must be 10 digits")
+                        }
+                    }
                 )
                 OutlinedTextField(
                     value = applicantEmail,
-                    onValueChange = { applicantEmail = it },
-                    label = { Text("Email") },
-                    modifier = Modifier.weight(1f)
+                    onValueChange = {
+                        applicantEmail = it
+                        applicantEmailError = it.isBlank()
+                        if (!it.isBlank()) {
+                            applicantEmailFormatError = !validateEmail(it)
+                        }
+                    },
+                    label = { Text("Email *") },
+                    modifier = Modifier.weight(1f),
+                    isError = applicantEmailError || applicantEmailFormatError,
+                    supportingText = {
+                        when {
+                            applicantEmailError -> Text("Email is required")
+                            applicantEmailFormatError -> Text("Must end with @iitrpr.ac.in")
+                        }
+                    }
                 )
             }
         }
@@ -352,7 +496,7 @@ fun ReservationFormScreen() {
                     OutlinedTextField(
                         value = reviewer,
                         onValueChange = {},
-                        label = { Text("Reviewer") },
+                        label = { Text("Reviewer *") },
                         readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = reviewerExpanded) },
                         modifier = Modifier
@@ -378,7 +522,7 @@ fun ReservationFormScreen() {
                 OutlinedTextField(
                     value = "Chairman",
                     onValueChange = {},
-                    label = { Text("Reviewer") },
+                    label = { Text("Reviewer *") },
                     readOnly = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -388,6 +532,12 @@ fun ReservationFormScreen() {
         // Submit Button
         Button(
             onClick = {
+                // Validate all fields first
+                if (!validateFields()) {
+                    Toast.makeText(context, "Please fill all required fields correctly", Toast.LENGTH_SHORT).show()
+                    return@Button
+                }
+
                 // Validate arrival date
                 try {
                     val arrivalLocalDate = LocalDate.parse(arrivalDate, dateFormatter)
@@ -495,7 +645,6 @@ fun ReservationFormScreen() {
         }
     }
 }
-
 @Composable
 fun FormSection(
     title: String,
@@ -591,6 +740,7 @@ fun TimePickerTextField(
     )
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true)
 @Composable
 fun ReservationFormScreenPreview() {
