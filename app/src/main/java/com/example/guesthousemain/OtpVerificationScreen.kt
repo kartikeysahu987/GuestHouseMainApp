@@ -224,7 +224,7 @@ fun OTPTextField(
 
             Box(
                 modifier = Modifier
-                    .size(56.dp)
+                    .size(40.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(backgroundColor)
                     .border(
