@@ -14,12 +14,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.Properties
+import javax.mail.Message
+import javax.mail.PasswordAuthentication
+import javax.mail.Session
+import javax.mail.Transport
+import javax.mail.internet.InternetAddress
+import javax.mail.internet.MimeMessage
+
+// Default SMTP credentials
+private const val DEFAULT_SMTP_EMAIL = "aimsportal420@gmail.com"
+private const val DEFAULT_SMTP_PASSWORD = "dcmsxftqpduuzwsq"
 
 @Composable
 fun ContactScreen() {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var message by remember { mutableStateOf("") }
+    var infoMessage by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
@@ -127,32 +144,110 @@ fun ContactScreen() {
                     maxLines = 6
                 )
 
+                // Info message for response feedback
+                if (infoMessage.isNotEmpty()) {
+                    Text(
+                        text = infoMessage,
+                        modifier = Modifier.padding(bottom = 16.dp),
+                        color = if (infoMessage.contains("Failed")) Color.Red else Color.Green
+                    )
+                }
+
                 // Send Button
                 Button(
-                    onClick = { /* Handle sending message */ },
+                    onClick = {
+                        if (validateInputs(name, email, message)) {
+                            isLoading = true
+                            infoMessage = "Sending email..."
+                            val subject = "Message from $name"
+
+                            coroutineScope.launch {
+                                val result = sendEmailWithCoroutine(
+                                    recipient = email,
+                                    subject = subject,
+                                    messageBody = "From: $name\nEmail: $email\n\n$message"
+                                )
+
+                                infoMessage = result
+                                isLoading = false
+                            }
+                        } else {
+                            infoMessage = "Please fill in all fields correctly"
+                        }
+                    },
                     modifier = Modifier
                         .width(220.dp)
                         .height(50.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF2196F3)
                     ),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    enabled = !isLoading
                 ) {
-                    Text(
-                        text = "Send Message",
-                        color = Color.White,
-                        fontSize = 16.sp
-                    )
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White
+                        )
+                    } else {
+                        Text(
+                            text = "Send Message",
+                            color = Color.White,
+                            fontSize = 16.sp
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-// Example usage in your activity/app
-@Composable
-fun ContactApp() {
-    MaterialTheme {
-        ContactScreen()
+// Validate all inputs
+fun validateInputs(
+    name: String,
+    email: String,
+    message: String
+): Boolean {
+    // Simple validation - ensure all fields have content
+    return name.isNotEmpty() &&
+            email.isNotEmpty() &&
+            message.isNotEmpty() &&
+            email.contains("@") // Basic email validation
+}
+
+// Email sending function using coroutines
+suspend fun sendEmailWithCoroutine(
+    recipient: String,
+    subject: String,
+    messageBody: String
+): String = withContext(Dispatchers.IO) {
+    try {
+        val properties = Properties().apply {
+            put("mail.smtp.auth", "true")
+            put("mail.smtp.starttls.enable", "true")
+            put("mail.smtp.host", "smtp.gmail.com")
+            put("mail.smtp.port", "587")
+            put("mail.debug", "true")  // For debugging
+        }
+
+        val session = Session.getInstance(properties, object : javax.mail.Authenticator() {
+            override fun getPasswordAuthentication(): PasswordAuthentication {
+                return PasswordAuthentication(DEFAULT_SMTP_EMAIL, DEFAULT_SMTP_PASSWORD)
+            }
+        })
+
+        MimeMessage(session).apply {
+            setFrom(InternetAddress(DEFAULT_SMTP_EMAIL))
+            setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipient))
+            this.subject = subject
+            setText(messageBody)
+
+            Transport.send(this)
+        }
+
+        "Email sent successfully!"
+    } catch (e: Exception) {
+        e.printStackTrace()
+        "Failed to send email: ${e.localizedMessage ?: e.message ?: "Unknown error"}"
     }
 }

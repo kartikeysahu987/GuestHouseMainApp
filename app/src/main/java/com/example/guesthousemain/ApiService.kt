@@ -12,7 +12,8 @@ import retrofit2.http.Header
 import retrofit2.http.POST
 
 var url: String = "https://guesthouseportalbackendiitr-production.up.railway.app/"
-// New data class for applicant details
+
+// Applicant and Reservation Data Classes
 data class Applicant(
     @SerializedName("name")
     val name: String,
@@ -28,7 +29,6 @@ data class Applicant(
     val email: String
 )
 
-// Updated CreateReservationRequest with applicant as an object and new fields reviewers and subroles
 data class CreateReservationRequest(
     @SerializedName("numberOfGuests")
     val numberOfGuests: Int,
@@ -62,13 +62,12 @@ data class CreateReservationRequest(
     val subroles: String
 )
 
-// The CreateReservationResponse and the ApiService remain the same.
 data class CreateReservationResponse(
     @SerializedName("message")
     val message: String
 )
 
-// --- OTP Endpoints ---
+// OTP Endpoints
 data class OtpRequest(
     @SerializedName("email")
     val email: String
@@ -97,7 +96,7 @@ data class OtpVerifyResponse(
     val message: String? = null
 )
 
-// --- Login Endpoint ---
+// Login Endpoint
 data class LoginRequest(
     @SerializedName("email")
     val email: String,
@@ -118,7 +117,7 @@ data class LoginResponse(
     val refreshToken: String?
 )
 
-// --- Registration Endpoints ---
+// Registration Endpoints
 data class RegisterUserRequest(
     @SerializedName("email")
     val email: String,
@@ -152,7 +151,7 @@ data class UserData(
     val contact: String?
 )
 
-// --- Reservation Endpoints ---
+// Reservation Endpoints
 data class Reservation(
     @SerializedName("_id")
     val id: String?,
@@ -161,6 +160,7 @@ data class Reservation(
     @SerializedName("status")
     val status: String?
 )
+
 data class GoogleSignInRequest(
     @SerializedName("idToken")
     val idToken: String,
@@ -168,8 +168,22 @@ data class GoogleSignInRequest(
     val email: String
 )
 
+// New Data Classes for Mail Feature
+data class MailRequest(
+    @SerializedName("to")
+    val to: String,
+    @SerializedName("subject")
+    val subject: String,
+    @SerializedName("body")
+    val body: String
+)
 
+data class MailResponse(
+    @SerializedName("message")
+    val message: String
+)
 
+// API Interfaces
 interface AuthService {
     @POST("auth/otp")
     fun sendOtp(@Body otpRequest: OtpRequest): Call<OtpResponse>
@@ -204,7 +218,6 @@ interface AuthService {
         @Header("refreshToken") refreshToken: String
     ): Call<List<Reservation>>
 
-    // New endpoint for creating a reservation
     @POST("reservation")
     fun createReservation(
         @Header("accessToken") accessToken: String,
@@ -213,6 +226,13 @@ interface AuthService {
     ): Call<CreateReservationResponse>
 }
 
+// Separate interface for Mail endpoints
+interface MailService {
+    @POST("mail")
+    fun sendMail(@Body mailRequest: MailRequest): Call<MailResponse>
+}
+
+// Updated ApiService Object
 object ApiService {
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
@@ -227,4 +247,5 @@ object ApiService {
         .build()
 
     val authService: AuthService = retrofit.create(AuthService::class.java)
+    val mailService: MailService = retrofit.create(MailService::class.java)
 }
