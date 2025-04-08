@@ -20,6 +20,9 @@ fun ContactScreen() {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var message by remember { mutableStateOf("") }
+    var showMessageSent by remember { mutableStateOf(false) }  // Flag to show message sent confirmation
+    var showValidationError by remember { mutableStateOf(false) }  // Flag to show validation error
+
 
     Box(
         modifier = Modifier
@@ -129,7 +132,19 @@ fun ContactScreen() {
 
                 // Send Button
                 Button(
-                    onClick = { /* Handle sending message */ },
+                    onClick = { /* Handle sending message */
+                        if (name.isNotEmpty() && email.isNotEmpty() && message.isNotEmpty()) {
+                            // Handle sending message here
+                            showMessageSent = true
+                            showValidationError = false  // Reset error message
+                            // You can make an API call here to send data
+                        } else {
+                            // Show a simple validation error or prompt the user
+                            showMessageSent = false
+                            showValidationError = true  // Show validation error
+                        }
+                              },
+
                     modifier = Modifier
                         .width(220.dp)
                         .height(50.dp),
@@ -142,6 +157,26 @@ fun ContactScreen() {
                         text = "Send Message",
                         color = Color.White,
                         fontSize = 16.sp
+                    )
+                }
+                // Display validation error message
+                if (showValidationError) {
+                    Text(
+                        text = "Please fill out all fields.",
+                        color = Color.Red,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
+                }
+                // Display message sent confirmation
+                if (showMessageSent) {
+                    Text(
+                        text = "Message Sent!",
+                        color = Color.Black,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(top = 16.dp)
                     )
                 }
             }

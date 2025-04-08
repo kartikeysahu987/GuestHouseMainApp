@@ -1,6 +1,8 @@
 package com.example.guesthousemain.ui
 
 import ContactScreen
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
@@ -529,11 +531,17 @@ fun HomeScreen(navController: NavHostController) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             // Rooms card
+            val context = LocalContext.current
             FeatureCard(
                 icon = Icons.Outlined.LocationOn,
                 title = "Location",
                 description = "Indian Institute of Technology,Ropar.",
                 modifier = Modifier.weight(1f)
+                    .clickable {
+
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/place/Indian+Institute+Of+Technology%E2%80%93Ropar+(IIT%E2%80%93Ropar)/@19.7245145,60.9639773,4z/data=!4m10!1m2!2m1!1siit+ropar!3m6!1s0x3905542fe45e58f7:0x5d16c2617cfdbdb8!8m2!3d30.9686169!4d76.473305!15sCglpaXQgcm9wYXKSARJlbmdpbmVlcmluZ19zY2hvb2zgAQA!16s%2Fm%2F04q3dqb?authuser=0&entry=ttu&g_ep=EgoyMDI1MDMwNC4wIKXMDSoASAFQAw%3D%3D"))
+                        context.startActivity(intent)
+                    }
             )
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -544,6 +552,10 @@ fun HomeScreen(navController: NavHostController) {
                 title = "Events",
                 description = "Conference halls & event spaces.",
                 modifier = Modifier.weight(1f)
+//                    .clickable {
+//                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.iitrpr.ac.in/events"))
+//                        context.startActivity(intent)
+//                    }
             )
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -554,6 +566,10 @@ fun HomeScreen(navController: NavHostController) {
                 title = "About",
                 description = "Learn more about us.",
                 modifier = Modifier.weight(1f)
+                    .clickable {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.iitrpr.ac.in/about-iit-ropar"))
+                        context.startActivity(intent)
+                    }
             )
         }
 
