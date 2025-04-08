@@ -1,10 +1,13 @@
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,6 +32,11 @@ import javax.mail.internet.MimeMessage
 private const val DEFAULT_SMTP_EMAIL = "aimsportal420@gmail.com"
 private const val DEFAULT_SMTP_PASSWORD = "dcmsxftqpduuzwsq"
 
+// Recipient emails
+private const val DEAN_EMAIL = "2022csb1087@iitrpr.ac.in"
+private const val CHAIRMAN_EMAIL = "2022csb1202@iitrpr.ac.in"
+private const val IT_TEAM_EMAIL = "2022csb1097@iitrpr.ac.in"
+
 @Composable
 fun ContactScreen() {
     var name by remember { mutableStateOf("") }
@@ -37,6 +45,10 @@ fun ContactScreen() {
     var infoMessage by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+
+    // Recipient selection state
+    var selectedRecipient by remember { mutableStateOf(RecipientType.IT_TEAM) }
+    var isDropdownExpanded by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -121,6 +133,57 @@ fun ContactScreen() {
                     singleLine = true
                 )
 
+                // Recipient Dropdown
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                ) {
+                    OutlinedCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = CardDefaults.outlinedCardColors(
+                            containerColor = Color.White
+                        ),
+                        border = BorderStroke(1.dp, Color.LightGray)
+                    ) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { isDropdownExpanded = !isDropdownExpanded }
+                                        .padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(text = "Send to: ${selectedRecipient.displayName}")
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowDropDown,
+                                        contentDescription = "Dropdown"
+                                    )
+                                }
+                            }
+
+                            DropdownMenu(
+                                expanded = isDropdownExpanded,
+                                onDismissRequest = { isDropdownExpanded = false },
+                                modifier = Modifier.fillMaxWidth(0.9f)
+                            ) {
+                                RecipientType.values().forEach { recipientType ->
+                                    DropdownMenuItem(
+                                        text = { Text(text = recipientType.displayName) },
+                                        onClick = {
+                                            selectedRecipient = recipientType
+                                            isDropdownExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // Message Field
                 OutlinedTextField(
                     value = message,
@@ -159,13 +222,14 @@ fun ContactScreen() {
                         if (validateInputs(name, email, message)) {
                             isLoading = true
                             infoMessage = "Sending email..."
-                            val subject = "Message from $name"
+                            val recipientEmail = selectedRecipient.email
+                            val subject = "Message from $name (To: ${selectedRecipient.displayName})"
 
                             coroutineScope.launch {
                                 val result = sendEmailWithCoroutine(
-                                    recipient = email,
+                                    recipient = recipientEmail,
                                     subject = subject,
-                                    messageBody = "From: $name\nEmail: $email\n\n$message"
+                                    messageBody = "From: $name\nReply Email: $email\n\n$message"
                                 )
 
                                 infoMessage = result
@@ -200,6 +264,13 @@ fun ContactScreen() {
             }
         }
     }
+}
+
+// Enum for recipient types
+enum class RecipientType(val displayName: String, val email: String) {
+    IT_TEAM("IT Team", IT_TEAM_EMAIL),
+    DEAN("Dean", DEAN_EMAIL),
+    CHAIRMAN("Chairman", CHAIRMAN_EMAIL)
 }
 
 // Validate all inputs
@@ -245,7 +316,7 @@ suspend fun sendEmailWithCoroutine(
             Transport.send(this)
         }
 
-        "Email sent successfully!"
+        "Email sent successfully to ${recipient}!"
     } catch (e: Exception) {
         e.printStackTrace()
         "Failed to send email: ${e.localizedMessage ?: e.message ?: "Unknown error"}"

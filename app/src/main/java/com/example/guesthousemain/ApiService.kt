@@ -10,8 +10,19 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 var url: String = "https://guesthouseportalbackendiitr-production.up.railway.app/"
+
+// Reviewer Data Class
+data class Reviewer(
+    @SerializedName("role")
+    val role: String,
+    @SerializedName("status")
+    val status: String? = null,
+    @SerializedName("remarks")
+    val remarks: String? = null
+)
 
 // Applicant and Reservation Data Classes
 data class Applicant(
@@ -57,7 +68,7 @@ data class CreateReservationRequest(
     @SerializedName("applicant")
     val applicant: Applicant?,
     @SerializedName("reviewers")
-    val reviewers: String,
+    val reviewers: String,  // Changed from String to List<Reviewer>
     @SerializedName("subroles")
     val subroles: String
 )
@@ -158,7 +169,42 @@ data class Reservation(
     @SerializedName("guestEmail")
     val guestEmail: String?,
     @SerializedName("status")
-    val status: String?
+    val status: String?,
+    // Adding fields that will be received from the detailed response
+    @SerializedName("numberOfGuests")
+    val numberOfGuests: Int? = null,
+    @SerializedName("numberOfRooms")
+    val numberOfRooms: Int? = null,
+    @SerializedName("roomType")
+    val roomType: String? = null,
+    @SerializedName("purpose")
+    val purpose: String? = null,
+    @SerializedName("guestName")
+    val guestName: String? = null,
+    @SerializedName("arrivalDate")
+    val arrivalDate: String? = null,
+    @SerializedName("arrivalTime")
+    val arrivalTime: String? = null,
+    @SerializedName("departureDate")
+    val departureDate: String? = null,
+    @SerializedName("departureTime")
+    val departureTime: String? = null,
+    @SerializedName("address")
+    val address: String? = null,
+    @SerializedName("category")
+    val category: String? = null,
+    @SerializedName("source")
+    val source: String? = null,
+    @SerializedName("applicant")
+    val applicant: Applicant? = null,
+    @SerializedName("reviewers")
+    val reviewers: List<Reviewer>? = null  // Changed from String to List<Reviewer>
+)
+
+// Response for reservation details
+data class ReservationDetailResponse(
+    @SerializedName("reservation")
+    val reservation: Reservation
 )
 
 data class GoogleSignInRequest(
@@ -224,6 +270,14 @@ interface AuthService {
         @Header("refreshToken") refreshToken: String,
         @Body reservation: CreateReservationRequest
     ): Call<CreateReservationResponse>
+
+    // New endpoint for getting reservation details
+    @GET("reservation/{id}")
+    fun getReservationDetails(
+        @Path("id") id: String,
+        @Header("accessToken") accessToken: String,
+        @Header("refreshToken") refreshToken: String
+    ): Call<ReservationDetailResponse>
 }
 
 // Separate interface for Mail endpoints
