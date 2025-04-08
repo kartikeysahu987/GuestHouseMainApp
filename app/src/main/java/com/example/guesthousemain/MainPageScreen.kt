@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -387,6 +388,9 @@ fun WelcomeSection() {
 
 @Composable
 fun HomeScreen(navController: NavHostController) {
+    // Get current context for launching intents
+    val context = LocalContext.current
+
     // Using your existing images from the drawable folder
     val imageResources = listOf(
         R.drawable.beas,
@@ -530,18 +534,25 @@ fun HomeScreen(navController: NavHostController) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Rooms card
-            val context = LocalContext.current
+            // Location card - Now with click functionality to open Google Maps
             FeatureCard(
                 icon = Icons.Outlined.LocationOn,
                 title = "Location",
-                description = "Indian Institute of Technology,Ropar.",
-                modifier = Modifier.weight(1f)
-                    .clickable {
-
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/maps/place/Indian+Institute+Of+Technology%E2%80%93Ropar+(IIT%E2%80%93Ropar)/@19.7245145,60.9639773,4z/data=!4m10!1m2!2m1!1siit+ropar!3m6!1s0x3905542fe45e58f7:0x5d16c2617cfdbdb8!8m2!3d30.9686169!4d76.473305!15sCglpaXQgcm9wYXKSARJlbmdpbmVlcmluZ19zY2hvb2zgAQA!16s%2Fm%2F04q3dqb?authuser=0&entry=ttu&g_ep=EgoyMDI1MDMwNC4wIKXMDSoASAFQAw%3D%3D"))
-                        context.startActivity(intent)
+                description = "Indian Institute of Technology, Ropar.",
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    // Open Google Maps with IIT Ropar's coordinates
+                    val mapIntent = Intent(Intent.ACTION_VIEW, Uri.parse("geo:30.9716,76.5305?q=IIT+Ropar"))
+                    mapIntent.setPackage("com.google.android.apps.maps")
+                    if (mapIntent.resolveActivity(context.packageManager) != null) {
+                        context.startActivity(mapIntent)
+                    } else {
+                        // Fallback to browser if Google Maps app is not installed
+                        val browserIntent = Intent(Intent.ACTION_VIEW,
+                            Uri.parse("https://www.google.com/maps/search/?api=1&query=IIT+Ropar"))
+                        context.startActivity(browserIntent)
                     }
+                }
             )
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -552,10 +563,6 @@ fun HomeScreen(navController: NavHostController) {
                 title = "Events",
                 description = "Conference halls & event spaces.",
                 modifier = Modifier.weight(1f)
-//                    .clickable {
-//                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.iitrpr.ac.in/events"))
-//                        context.startActivity(intent)
-//                    }
             )
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -565,23 +572,85 @@ fun HomeScreen(navController: NavHostController) {
                 icon = Icons.Outlined.Info,
                 title = "About",
                 description = "Learn more about us.",
-                modifier = Modifier.weight(1f)
-                    .clickable {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.iitrpr.ac.in/about-iit-ropar"))
-                        context.startActivity(intent)
-                    }
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    // Open IIT Ropar website in browser
+                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.iitrpr.ac.in/about-iit-ropar"))
+                    context.startActivity(browserIntent)
+                }
             )
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Book Now button - CORRECTED to navigate to the existing route
-
+        // Book Now button could be added here
 
         Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
+@Composable
+fun FeatureCard(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {} // Default empty click handler
+) {
+    Card(
+        modifier = modifier
+            .height(180.dp)
+            .clickable(onClick = onClick), // Make the entire card clickable
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFF5F3FF)
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 0.dp
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold
+                )
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+                color = Color.Gray
+            )
+        }
+    }
+}
 // Add a stub for the ReservationFormScreen that was missing
 @Composable
 fun ReservationFormScreen() {

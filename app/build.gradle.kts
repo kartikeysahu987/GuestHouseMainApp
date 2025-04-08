@@ -27,6 +27,19 @@ android {
             )
         }
     }
+
+    // Add this packaging block to resolve the duplicate file issues
+    packaging {
+        resources {
+            excludes += "META-INF/NOTICE.md"
+            excludes += "META-INF/LICENSE.md"
+            excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/notice.txt"
+            excludes += "META-INF/license.txt"
+            excludes += "META-INF/*.kotlin_module"
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -40,6 +53,9 @@ android {
 }
 
 dependencies {
+    // Your existing dependencies remain unchanged
+    implementation ("com.sun.mail:android-mail:1.6.7")
+    implementation ("com.sun.mail:android-activation:1.6.7")
     // Network
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
@@ -65,7 +81,6 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.appcompat)
-    implementation(libs.play.services.basement)
 
     // Testing
     testImplementation(libs.junit)
