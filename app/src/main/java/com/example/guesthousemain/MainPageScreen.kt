@@ -35,7 +35,9 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
+import com.example.guesthousemain.ProfileScreen
 import com.example.guesthousemain.R
+import com.example.guesthousemain.SettingsScreen
 import com.example.guesthousemain.ui.screens.*
 import com.example.guesthousemain.util.SessionManager
 import kotlinx.coroutines.CoroutineScope
@@ -77,6 +79,9 @@ fun MainPageScreen(globalNavController: NavHostController) {
     val scope = rememberCoroutineScope()
     val bottomNavController = rememberNavController()
 
+    // Create a nested NavController for the drawer navigation
+    val drawerNavController = rememberNavController()
+
     val items = listOf(
         BottomNavItem("reservation", "Reservation", Icons.Outlined.LocationOn, Color(0xFF9CA3AF)),
         BottomNavItem("home", "Home", Icons.Filled.Home, Color(0xFF7E22CE)),
@@ -89,6 +94,10 @@ fun MainPageScreen(globalNavController: NavHostController) {
             gesturesEnabled = drawerState.isOpen,
             drawerContent = {
                 DrawerContent(
+                    navController = drawerNavController,
+                    onCloseDrawer = {
+                        scope.launch { drawerState.close() }
+                    },
                     onLogout = {
                         SessionManager.clearTokens(context)
                         scope.launch { drawerState.close() }
@@ -104,27 +113,61 @@ fun MainPageScreen(globalNavController: NavHostController) {
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
                 topBar = { CleanMinimalistAppBar(scope, drawerState) },
-                bottomBar = { ModernBottomNavigation(navController = bottomNavController, items = items) },
+                bottomBar = { ModernBottomNavigation(bottomNavController = bottomNavController,
+                    drawerNavController = drawerNavController, items = items) },
                 containerColor = MaterialTheme.colorScheme.background
             ) { innerPadding ->
-                NavHost(
-                    navController = bottomNavController,
-                    startDestination = "home",
-                    modifier = Modifier.padding(innerPadding)
-                ) {
-                    composable("reservation") { ReservationScreen() }
-                    composable("home") { HomeScreen(bottomNavController) }
-                    composable("contact") { ContactScreen() }
-                    // Add the missing route for reservation_form
-                    composable("reservation_form") { ReservationFormScreen() }
+                // This is for the main content (bottom navigation)
+                Box(modifier = Modifier.padding(innerPadding)) {
+                    // First NavHost for bottom navigation
+                    NavHost(
+                        navController = bottomNavController,
+                        startDestination = "home"
+                    ) {
+                        composable("reservation") { ReservationScreen() }
+                        composable("home") { HomeScreen(bottomNavController) }
+                        composable("contact") { ContactScreen() }
+                        composable("reservation_form") { ReservationFormScreen() }
+                    }
+
+                    // Second NavHost for drawer navigation (profile & settings)
+                    // This will overlay the main content when active
+                    NavHost(
+                        navController = drawerNavController,
+                        startDestination = "none" // Empty start destination
+                    ) {
+                        composable("none") { /* Empty screen */ }
+                        composable("profile") {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.background)
+                            ) {
+                                ProfileScreen()
+                            }
+                        }
+                        composable("settings") {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.background)
+                            ) {
+                                SettingsScreen()
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 }
-
+// Updated DrawerContent with navigation
 @Composable
-private fun DrawerContent(onLogout: () -> Unit) {
+private fun DrawerContent(
+    navController: NavHostController,
+    onCloseDrawer: () -> Unit,
+    onLogout: () -> Unit
+) {
     ModalDrawerSheet(
         modifier = Modifier.width(280.dp),
         drawerContainerColor = MaterialTheme.colorScheme.background,
@@ -137,7 +180,7 @@ private fun DrawerContent(onLogout: () -> Unit) {
                 .padding(16.dp)
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                // Logo or icon could go here
+                // Logo or icon
                 Image(
                     painter = painterResource(id = R.drawable.iit_ropar_logo),
                     contentDescription = "IIT Ropar Logo",
@@ -165,7 +208,10 @@ private fun DrawerContent(onLogout: () -> Unit) {
             icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
             label = { Text("Profile") },
             selected = false,
-            onClick = { },
+            onClick = {
+                navController.navigate("profile")
+                onCloseDrawer()
+            },
             modifier = Modifier.padding(horizontal = 12.dp)
         )
 
@@ -173,7 +219,10 @@ private fun DrawerContent(onLogout: () -> Unit) {
             icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
             label = { Text("Settings") },
             selected = false,
-            onClick = { },
+            onClick = {
+                navController.navigate("settings")
+                onCloseDrawer()
+            },
             modifier = Modifier.padding(horizontal = 12.dp)
         )
 
@@ -197,7 +246,6 @@ private fun DrawerContent(onLogout: () -> Unit) {
         )
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CleanMinimalistAppBar(scope: CoroutineScope, drawerState: DrawerState) {
@@ -261,8 +309,12 @@ private fun CleanMinimalistAppBar(scope: CoroutineScope, drawerState: DrawerStat
 }
 
 @Composable
-fun ModernBottomNavigation(navController: NavHostController, items: List<BottomNavItem>) {
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
+fun ModernBottomNavigation(
+    bottomNavController: NavHostController,
+    drawerNavController: NavHostController, // New parameter for the overlay/drawer navigation
+    items: List<BottomNavItem>
+) {
+    val navBackStackEntry by bottomNavController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
     Box(
@@ -292,8 +344,15 @@ fun ModernBottomNavigation(navController: NavHostController, items: List<BottomN
                         .padding(4.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .clickable(onClick = {
-                            navController.navigate(item.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
+                            // First clear any overlay in the drawer nav
+                            if (drawerNavController.currentBackStackEntry?.destination?.route != "none") {
+                                drawerNavController.navigate("none") {
+                                    popUpTo("none") { inclusive = true }
+                                }
+                            }
+                            // Then navigate the bottom nav host
+                            bottomNavController.navigate(item.route) {
+                                popUpTo(bottomNavController.graph.findStartDestination().id) {
                                     saveState = true
                                 }
                                 launchSingleTop = true
@@ -321,9 +380,9 @@ fun ModernBottomNavigation(navController: NavHostController, items: List<BottomN
             }
         }
 
-        // Bottom progress indicator
+        // Bottom progress indicator (for visual effect)
         LinearProgressIndicator(
-            progress = { 0.3f }, // This is just for visual effect
+            progress = { 0.3f },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(2.dp)
@@ -333,6 +392,7 @@ fun ModernBottomNavigation(navController: NavHostController, items: List<BottomN
         )
     }
 }
+
 
 @Composable
 fun WelcomeSection() {
