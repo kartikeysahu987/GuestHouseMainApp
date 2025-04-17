@@ -379,6 +379,7 @@ fun RejectedRequestContent() {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ReservationFormContent() {
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -398,7 +399,17 @@ fun ReservationFormContent() {
             colors = CardDefaults.cardColors(containerColor = HospitalityColors.cardBackground)
         ) {
             // Call the ReservationFormScreen from the separate file
-            ReservationFormScreen()
+            val context = LocalContext.current
+            ReservationFormScreen(
+                accessToken = SessionManager.accessToken,
+                refreshToken = SessionManager.refreshToken,
+                onSuccess = {
+                    Toast.makeText(context, "Reservation submitted successfully!", Toast.LENGTH_LONG).show()
+                },
+                onError = { errorMessage ->
+                    Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+                }
+            )
         }
     }
 }

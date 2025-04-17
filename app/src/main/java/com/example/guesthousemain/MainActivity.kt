@@ -2,6 +2,7 @@ package com.example.guesthousemain
 
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -11,6 +12,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -21,8 +23,10 @@ import com.example.guesthousemain.ui.MainPageScreen
 //import com.example.guesthousemain.ui.MainPageScreen
 import com.example.guesthousemain.ui.OtpVerificationScreen
 import com.example.guesthousemain.ui.RegisterScreen
+import com.example.guesthousemain.ui.ReservationFormScreen
+//import com.example.guesthousemain.ui.ReservationFormScreen
 import com.example.guesthousemain.ui.screens.HomeScreen
-import com.example.guesthousemain.ui.screens.ReservationFormScreen
+//import com.example.guesthousemain.ui.screens.ReservationFormScreen
 import com.example.guesthousemain.ui.theme.GuestHouseMainTheme
 import com.example.guesthousemain.util.SessionManager
 
@@ -76,10 +80,25 @@ fun AppNavigation(startDestination: String) {
         composable("main") {
             MainPageScreen(globalNavController)
         }
-        composable("reservation_form"){
-            ReservationFormScreen()
-
+        composable("reservation_form") {
+            val context = LocalContext.current
+            com.example.guesthousemain.ui.screens.ReservationFormScreen(
+                accessToken = SessionManager.accessToken,
+                refreshToken = SessionManager.refreshToken,
+                onSuccess = {
+                    Toast.makeText(
+                        context,
+                        "Reservation submitted successfully!",
+                        Toast.LENGTH_LONG
+                    ).show()
+                },
+                onError = { errorMessage ->
+                    Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+                }
+            )
         }
+
+
         composable("home"){
             HomeScreen(globalNavController)
         }
