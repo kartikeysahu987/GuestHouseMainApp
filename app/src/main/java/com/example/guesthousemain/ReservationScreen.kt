@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.guesthousemain.LocalThemeManager
 import com.example.guesthousemain.network.ApiService
 import com.example.guesthousemain.network.Reservation
 import com.example.guesthousemain.util.SessionManager
@@ -49,21 +50,55 @@ import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.*
 
-// Define modern hospitality industry-inspired colors
+// First, replace your existing HospitalityColors object with this theme-aware version
 object HospitalityColors {
-    val primary = Color(0xFF1A73E8) // Booking.com blue
-    val secondary = Color(0xFF00BFA5) // Mint green like TripAdvisor
-    val accent = Color(0xFFFFA000) // Amber like Expedia
-    val background = Color(0xFFF8F9FA) // Light background
-    val cardBackground = Color.White
-    val approved = Color(0xFF4CAF50) // Green for approved
-    val pending = Color(0xFFFF9800) // Orange for pending
-    val rejected = Color(0xFFE53935) // Red for rejected
-    val textPrimary = Color(0xFF202124) // Dark text
-    val textSecondary = Color(0xFF5F6368) // Grey text
-    val divider = Color(0xFFEEEEEE) // Light divider
+    // Light Theme Colors
+    val primaryLight = Color(0xFF1A73E8) // Booking.com blue
+    val secondaryLight = Color(0xFF00BFA5) // Mint green like TripAdvisor
+    val accentLight = Color(0xFFFFA000) // Amber like Expedia
+    val backgroundLight = Color(0xFFF8F9FA) // Light background
+    val cardBackgroundLight = Color.White
+    val approvedLight = Color(0xFF4CAF50) // Green for approved
+    val pendingLight = Color(0xFFFF9800) // Orange for pending
+    val rejectedLight = Color(0xFFE53935) // Red for rejected
+    val textPrimaryLight = Color(0xFF202124) // Dark text
+    val textSecondaryLight = Color(0xFF5F6368) // Grey text
+    val dividerLight = Color(0xFFEEEEEE) // Light divider
+
+    // Dark Theme Colors
+    val primaryDark = Color(0xFF2196F3) // Slightly lighter blue for dark theme
+    val secondaryDark = Color(0xFF26A69A) // Adjusted mint green
+    val accentDark = Color(0xFFFFB74D) // Lighter amber
+    val backgroundDark = Color(0xFF121212) // Dark background (Material Dark recommendation)
+    val cardBackgroundDark = Color(0xFF1E1E1E) // Slightly lighter than background
+    val approvedDark = Color(0xFF66BB6A) // Slightly lighter green
+    val pendingDark = Color(0xFFFFA726) // Slightly lighter orange
+    val rejectedDark = Color(0xFFEF5350) // Slightly lighter red
+    val textPrimaryDark = Color(0xFFEEEEEE) // Light text
+    val textSecondaryDark = Color(0xFFB0B0B0) // Grey text
+    val dividerDark = Color(0xFF424242) // Dark divider
+
+    @Composable
+    private fun isDarkTheme(): Boolean {
+        return LocalThemeManager.current.isDarkThemeFlow.collectAsState(initial = false).value
+    }
+
+    val primary @Composable get() = if (isDarkTheme()) primaryDark else primaryLight
+    val secondary @Composable get() = if (isDarkTheme()) secondaryDark else secondaryLight
+    val accent @Composable get() = if (isDarkTheme()) accentDark else accentLight
+    val background @Composable get() = if (isDarkTheme()) backgroundDark else backgroundLight
+    val cardBackground @Composable get() = if (isDarkTheme()) cardBackgroundDark else cardBackgroundLight
+    val approved @Composable get() = if (isDarkTheme()) approvedDark else approvedLight
+    val pending @Composable get() = if (isDarkTheme()) pendingDark else pendingLight
+    val rejected @Composable get() = if (isDarkTheme()) rejectedDark else rejectedLight
+    val textPrimary @Composable get() = if (isDarkTheme()) textPrimaryDark else textPrimaryLight
+    val textSecondary @Composable get() = if (isDarkTheme()) textSecondaryDark else textSecondaryLight
+    val divider @Composable get() = if (isDarkTheme()) dividerDark else dividerLight
 }
 
+
+
+// Then update your ReservationScreen composable to use these theme-aware colors
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -82,23 +117,23 @@ fun ReservationScreen() {
         Icons.Rounded.CalendarMonth
     )
 
+    // Update to use the theme-aware getters
     val tabColors = listOf(
         HospitalityColors.approved,
         HospitalityColors.pending,
         HospitalityColors.rejected,
         HospitalityColors.primary
     )
+    // Collect the current theme state
+    val themeManager = LocalThemeManager.current
+    val isDarkTheme by themeManager.isDarkThemeFlow.collectAsState(initial = false)
 
     var selectedTabIndex by remember { mutableStateOf(0) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     var isRefreshing by remember { mutableStateOf(false) }
-
-    // Track if a swipe is in progress to prevent multiple rapid swipes
     var isSwipeInProgress by remember { mutableStateOf(false) }
-
-    // Animated rotation for refresh icon
     val refreshRotation = remember { Animatable(0f) }
 
     LaunchedEffect(isRefreshing) {
@@ -135,7 +170,6 @@ fun ReservationScreen() {
                             if (!isRefreshing) {
                                 isRefreshing = true
                                 scope.launch {
-                                    // Show loading state for at least 800ms for better UX
                                     delay(800)
                                     isRefreshing = false
                                 }
@@ -161,7 +195,7 @@ fun ReservationScreen() {
                 .padding(innerPadding)
                 .background(HospitalityColors.background)
         ) {
-            // Animated tab selection with indicator animation
+            // Tab row with theme-aware colors
             ScrollableTabRow(
                 selectedTabIndex = selectedTabIndex,
                 edgePadding = 16.dp,
@@ -202,7 +236,8 @@ fun ReservationScreen() {
                             Icon(
                                 imageVector = tabIcons[index],
                                 contentDescription = null,
-                                tint = if (selectedTabIndex == index) tabColors[index] else Color.Gray,
+                                tint = if (selectedTabIndex == index) tabColors[index] else
+                                    if (isDarkTheme) Color.LightGray else Color.Gray,
                                 modifier = Modifier.animateContentSize(
                                     animationSpec = spring(
                                         dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -216,51 +251,36 @@ fun ReservationScreen() {
                 }
             }
 
-            // Tab content with padding and swipe gesture
+            // Rest of the content with swipe detection
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
-                    // Add horizontal drag gesture detection for swipe
                     .pointerInput(Unit) {
                         detectHorizontalDragGestures(
                             onDragEnd = {
-                                // Reset swipe status when finger is lifted
                                 isSwipeInProgress = false
                             },
-                            onDragStart = {
-                                // Nothing special on drag start
-                            },
+                            onDragStart = { },
                             onHorizontalDrag = { _, dragAmount ->
-                                // Only process swipe if we're not already in a swipe transition
                                 if (!isSwipeInProgress) {
-                                    val threshold = 50f // Minimum swipe distance to trigger a tab change
-
+                                    val threshold = 50f
                                     when {
-                                        // Swipe left (negative dragAmount) - go to next tab
                                         dragAmount < -threshold -> {
                                             if (selectedTabIndex < tabTitles.size - 1) {
                                                 isSwipeInProgress = true
                                                 scope.launch {
-                                                    // Move exactly one tab to the right
                                                     selectedTabIndex++
-
-                                                    // Add a small delay before allowing another swipe
-                                                    // This prevents accidental multiple swipes
                                                     delay(300)
                                                     isSwipeInProgress = false
                                                 }
                                             }
                                         }
-                                        // Swipe right (positive dragAmount) - go to previous tab
                                         dragAmount > threshold -> {
                                             if (selectedTabIndex > 0) {
                                                 isSwipeInProgress = true
                                                 scope.launch {
-                                                    // Move exactly one tab to the left
                                                     selectedTabIndex--
-
-                                                    // Add a small delay before allowing another swipe
                                                     delay(100)
                                                     isSwipeInProgress = false
                                                 }
@@ -272,17 +292,13 @@ fun ReservationScreen() {
                         )
                     }
             ) {
-                // Content is loaded based on selected tab with slide transition
                 AnimatedContent(
                     targetState = selectedTabIndex,
                     transitionSpec = {
-                        // Determine slide direction based on tab index change
                         if (targetState > initialState) {
-                            // Moving right (e.g., from Approved to Pending)
                             slideInHorizontally { width -> width } + fadeIn() with
                                     slideOutHorizontally { width -> -width } + fadeOut()
                         } else {
-                            // Moving left (e.g., from Pending to Approved)
                             slideInHorizontally { width -> -width } + fadeIn() with
                                     slideOutHorizontally { width -> width } + fadeOut()
                         }
@@ -296,7 +312,6 @@ fun ReservationScreen() {
                     }
                 }
 
-                // Loading overlay
                 this@Column.AnimatedVisibility(
                     visible = isRefreshing,
                     enter = fadeIn(animationSpec = tween(300)),
@@ -305,7 +320,8 @@ fun ReservationScreen() {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color(0x80FFFFFF)),
+                            .background(if (isDarkTheme)
+                                Color(0x80121212) else Color(0x80FFFFFF)),
                         contentAlignment = Alignment.Center
                     ) {
                         val infiniteTransition = rememberInfiniteTransition(label = "loading")
@@ -526,7 +542,7 @@ fun ReservationListContent(
         }
     }
 }
-
+// Update ReservationCard to use theme-aware colors
 @Composable
 fun ReservationCard(
     reservation: Reservation,
@@ -555,7 +571,7 @@ fun ReservationCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Reservation ID and Status Row with shimmer effect
+            // Reservation ID and Status Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -568,7 +584,6 @@ fun ReservationCard(
                     color = HospitalityColors.textPrimary
                 )
 
-                // Status chip with pulsating animation
                 val infiniteTransition = rememberInfiniteTransition(label = "pulse")
                 val alpha by infiniteTransition.animateFloat(
                     initialValue = 0.7f,
@@ -647,30 +662,11 @@ fun ReservationCard(
                     Divider(color = HospitalityColors.divider)
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Mock data for additional information
                     InfoRow(
                         icon = Icons.Rounded.Person,
                         label = "Guest",
                         value = reservation.guestEmail ?: "Guest information not available"
                     )
-
-//                    InfoRow(
-//                        icon = Icons.Rounded.CalendarMonth,
-//                        label = "Check-in",
-//                        value = reservation.checkInDate ?: "Not specified"
-//                    )
-
-//                    InfoRow(
-//                        icon = Icons.Rounded.CalendarMonth,
-//                        label = "Check-out",
-//                        value = reservation.checkOutDate ?: "Not specified"
-//                    )
-
-//                    InfoRow(
-//                        icon = Icons.Rounded.LocationOn,
-//                        label = "Room",
-//                        value = reservation.roomType ?: "Not specified"
-//                    )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -710,6 +706,7 @@ fun ReservationCard(
     }
 }
 
+// Update InfoRow to use theme-aware colors
 @Composable
 fun InfoRow(
     icon: ImageVector,
@@ -746,6 +743,7 @@ fun InfoRow(
     }
 }
 
+// Update LoadingState to use theme-aware colors
 @Composable
 fun LoadingState() {
     Box(
@@ -785,6 +783,7 @@ fun LoadingState() {
     }
 }
 
+// Update ErrorState to use theme-aware colors
 @Composable
 fun ErrorState(
     message: String,
@@ -800,7 +799,6 @@ fun ErrorState(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Animation for error icon
             val infiniteTransition = rememberInfiniteTransition(label = "error")
             val rotation by infiniteTransition.animateFloat(
                 initialValue = -5f,
@@ -842,6 +840,7 @@ fun ErrorState(
     }
 }
 
+// Update EmptyState to use theme-aware colors
 @Composable
 fun EmptyState(message: String) {
     Box(
@@ -854,7 +853,6 @@ fun EmptyState(message: String) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Empty state illustration with subtle animation
             val infiniteTransition = rememberInfiniteTransition(label = "empty")
             val scale by infiniteTransition.animateFloat(
                 initialValue = 0.95f,

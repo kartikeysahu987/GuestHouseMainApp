@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.guesthousemain.LocalThemeManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,6 +40,9 @@ private const val IT_TEAM_EMAIL = "2022csb1097@iitrpr.ac.in"
 
 @Composable
 fun ContactScreen() {
+    // Collect the current theme state
+    val themeManager = LocalThemeManager.current
+    val isDarkTheme by themeManager.isDarkThemeFlow.collectAsState(initial = false)
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var message by remember { mutableStateOf("") }
@@ -50,18 +54,41 @@ fun ContactScreen() {
     var selectedRecipient by remember { mutableStateOf(RecipientType.IT_TEAM) }
     var isDropdownExpanded by remember { mutableStateOf(false) }
 
+    // Define theme-based colors
+    val backgroundGradient = if (isDarkTheme) {
+        Brush.linearGradient(
+            colors = listOf(
+                Color(0xFF102027),
+                Color(0xFF263238),
+                Color(0xFF102027)
+            )
+        )
+    } else {
+        Brush.linearGradient(
+            colors = listOf(
+                Color(0xFFE3F2FD),
+                Color(0xFFBBDEFB),
+                Color(0xFFE1F5FE)
+            )
+        )
+    }
+
+    val cardBackgroundColor = if (isDarkTheme) {
+        Color(0xFF263238).copy(alpha = 0.9f)
+    } else {
+        Color.White.copy(alpha = 0.9f)
+    }
+
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val primaryColor = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF2196F3)
+    val unfocusedBorderColor = if (isDarkTheme) Color.DarkGray else Color.LightGray
+    val dropdownBackgroundColor = if (isDarkTheme) Color(0xFF263238) else Color.White
+    val borderColor = if (isDarkTheme) Color.DarkGray else Color.LightGray
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        Color(0xFFE3F2FD),
-                        Color(0xFFBBDEFB),
-                        Color(0xFFE1F5FE)
-                    )
-                )
-            )
+            .background(brush = backgroundGradient)
     ) {
         Card(
             modifier = Modifier
@@ -69,7 +96,7 @@ fun ContactScreen() {
                 .padding(16.dp)
                 .align(Alignment.Center),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.9f)
+                containerColor = cardBackgroundColor
             ),
             elevation = CardDefaults.cardElevation(
                 defaultElevation = 6.dp
@@ -86,7 +113,8 @@ fun ContactScreen() {
                     text = "CONTACT US",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 24.dp)
+                    modifier = Modifier.padding(bottom = 24.dp),
+                    color = textColor
                 )
 
                 // Name Field
@@ -96,17 +124,23 @@ fun ContactScreen() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 16.dp),
-                    placeholder = { Text("Your Name") },
+                    placeholder = {
+                        Text("Your Name", color = textColor.copy(alpha = 0.6f))
+                    },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Person,
-                            contentDescription = "Name Icon"
+                            contentDescription = "Name Icon",
+                            tint = primaryColor
                         )
                     },
                     shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedBorderColor = Color(0xFF2196F3)
+                        unfocusedBorderColor = unfocusedBorderColor,
+                        focusedBorderColor = primaryColor,
+                        cursorColor = primaryColor,
+                        unfocusedTextColor = textColor,
+                        focusedTextColor = textColor
                     ),
                     singleLine = true
                 )
@@ -118,17 +152,23 @@ fun ContactScreen() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 16.dp),
-                    placeholder = { Text("Your Email") },
+                    placeholder = {
+                        Text("Your Email", color = textColor.copy(alpha = 0.6f))
+                    },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Email,
-                            contentDescription = "Email Icon"
+                            contentDescription = "Email Icon",
+                            tint = primaryColor
                         )
                     },
                     shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedBorderColor = Color(0xFF2196F3)
+                        unfocusedBorderColor = unfocusedBorderColor,
+                        focusedBorderColor = primaryColor,
+                        cursorColor = primaryColor,
+                        unfocusedTextColor = textColor,
+                        focusedTextColor = textColor
                     ),
                     singleLine = true
                 )
@@ -143,9 +183,9 @@ fun ContactScreen() {
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp),
                         colors = CardDefaults.outlinedCardColors(
-                            containerColor = Color.White
+                            containerColor = dropdownBackgroundColor
                         ),
-                        border = BorderStroke(1.dp, Color.LightGray)
+                        border = BorderStroke(1.dp, borderColor)
                     ) {
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Box(modifier = Modifier.fillMaxWidth()) {
@@ -157,10 +197,14 @@ fun ContactScreen() {
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text(text = "Send to: ${selectedRecipient.displayName}")
+                                    Text(
+                                        text = "Send to: ${selectedRecipient.displayName}",
+                                        color = textColor
+                                    )
                                     Icon(
                                         imageVector = Icons.Default.ArrowDropDown,
-                                        contentDescription = "Dropdown"
+                                        contentDescription = "Dropdown",
+                                        tint = primaryColor
                                     )
                                 }
                             }
@@ -192,17 +236,23 @@ fun ContactScreen() {
                         .fillMaxWidth()
                         .height(140.dp)
                         .padding(bottom = 16.dp),
-                    placeholder = { Text("Your Message") },
+                    placeholder = {
+                        Text("Your Message", color = textColor.copy(alpha = 0.6f))
+                    },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Edit,
-                            contentDescription = "Message Icon"
+                            contentDescription = "Message Icon",
+                            tint = primaryColor
                         )
                     },
                     shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color.LightGray,
-                        focusedBorderColor = Color(0xFF2196F3)
+                        unfocusedBorderColor = unfocusedBorderColor,
+                        focusedBorderColor = primaryColor,
+                        cursorColor = primaryColor,
+                        unfocusedTextColor = textColor,
+                        focusedTextColor = textColor
                     ),
                     maxLines = 6
                 )
@@ -212,7 +262,7 @@ fun ContactScreen() {
                     Text(
                         text = infoMessage,
                         modifier = Modifier.padding(bottom = 16.dp),
-                        color = if (infoMessage.contains("Failed")) Color.Red else Color.Green
+                        color = if (infoMessage.contains("Failed")) Color.Red else Color(0xFF4CAF50)
                     )
                 }
 
@@ -243,7 +293,7 @@ fun ContactScreen() {
                         .width(220.dp)
                         .height(50.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2196F3)
+                        containerColor = primaryColor
                     ),
                     shape = RoundedCornerShape(8.dp),
                     enabled = !isLoading

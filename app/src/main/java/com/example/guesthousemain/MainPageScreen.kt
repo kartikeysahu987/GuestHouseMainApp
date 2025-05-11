@@ -42,6 +42,19 @@ import com.example.guesthousemain.ui.screens.*
 import com.example.guesthousemain.util.SessionManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.guesthousemain.NotificationScreen
+import com.example.guesthousemain.NotificationViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 @Composable
 fun GuestHouseApp(content: @Composable () -> Unit) {
@@ -49,17 +62,29 @@ fun GuestHouseApp(content: @Composable () -> Unit) {
 
     val colorScheme = if (darkTheme) {
         darkColorScheme(
-            primary = Color(0xFF7E22CE), // Purple primary color
-            surface = Color(0xFFF5F3FF), // Light purple surface
-            background = Color.White,
-            onBackground = Color(0xFF1A1A1A)
+            primary = Color(0xFF9F70D0), // Lighter purple for dark theme
+            onPrimary = Color.White,
+            surface = Color(0xFF2D2D3A), // Dark purple surface
+            onSurface = Color(0xFFE1E1E1),
+            background = Color(0xFF121212), // Dark background
+            onBackground = Color(0xFFE1E1E1),
+            secondary = Color(0xFF7E22CE),
+            onSecondary = Color.White,
+            surfaceVariant = Color(0xFF3D3D4E),
+            onSurfaceVariant = Color(0xFFE1E1E1),
         )
     } else {
         lightColorScheme(
             primary = Color(0xFF7E22CE), // Purple primary color
+            onPrimary = Color.White,
             surface = Color(0xFFF5F3FF), // Light purple surface
+            onSurface = Color(0xFF1A1A1A),
             background = Color.White,
-            onBackground = Color(0xFF1A1A1A)
+            onBackground = Color(0xFF1A1A1A),
+            secondary = Color(0xFF9F70D0),
+            onSecondary = Color.White,
+            surfaceVariant = Color(0xFFEEEAF4),
+            onSurfaceVariant = Color(0xFF1A1A1A),
         )
     }
 
@@ -73,7 +98,7 @@ fun GuestHouseApp(content: @Composable () -> Unit) {
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainPageScreen(globalNavController: NavHostController) {
+fun MainPageScreen(globalNavController: NavHostController,notificationViewModel: NotificationViewModel) {
     val context = LocalContext.current
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -83,9 +108,9 @@ fun MainPageScreen(globalNavController: NavHostController) {
     val drawerNavController = rememberNavController()
 
     val items = listOf(
-        BottomNavItem("reservation", "Reservation", Icons.Outlined.LocationOn, Color(0xFF9CA3AF)),
-        BottomNavItem("home", "Home", Icons.Filled.Home, Color(0xFF7E22CE)),
-        BottomNavItem("contact", "Contact", Icons.Outlined.Info, Color(0xFF9CA3AF))
+        BottomNavItem("reservation", "Reservation", Icons.Outlined.LocationOn, MaterialTheme.colorScheme.primary),
+        BottomNavItem("home", "Home", Icons.Filled.Home, MaterialTheme.colorScheme.primary),
+        BottomNavItem("contact", "Contact", Icons.Outlined.Info, MaterialTheme.colorScheme.primary)
     )
 
     MaterialTheme {
@@ -112,7 +137,7 @@ fun MainPageScreen(globalNavController: NavHostController) {
         ) {
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
-                topBar = { CleanMinimalistAppBar(scope, drawerState) },
+                topBar = { CleanMinimalistAppBar(scope, drawerState, bottomNavController) },
                 bottomBar = { ModernBottomNavigation(bottomNavController = bottomNavController,
                     drawerNavController = drawerNavController, items = items) },
                 containerColor = MaterialTheme.colorScheme.background
@@ -128,6 +153,11 @@ fun MainPageScreen(globalNavController: NavHostController) {
                         composable("home") { HomeScreen(bottomNavController) }
                         composable("contact") { ContactScreen() }
                         composable("reservation_form") { ReservationFormScreen() }
+                        composable("notifications") {
+                            NotificationScreen(navigateBack = {globalNavController.popBackStack() },
+                                viewModel = notificationViewModel
+                            )
+                        }
                     }
 
                     // Second NavHost for drawer navigation (profile & settings)
@@ -152,7 +182,7 @@ fun MainPageScreen(globalNavController: NavHostController) {
                                     .fillMaxSize()
                                     .background(MaterialTheme.colorScheme.background)
                             ) {
-                                SettingsScreen()
+                                SettingsScreen(bottomNavController = bottomNavController,drawerNavController = drawerNavController)
                             }
                         }
                     }
@@ -161,7 +191,8 @@ fun MainPageScreen(globalNavController: NavHostController) {
         }
     }
 }
-// Updated DrawerContent with navigation
+
+// Updated DrawerContent with navigation and theme support
 @Composable
 private fun DrawerContent(
     navController: NavHostController,
@@ -190,18 +221,16 @@ private fun DrawerContent(
                 )
                 Text(
                     text = "Guest House",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 24.sp
-                    ),
-                    color = MaterialTheme.colorScheme.primary
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
 
         Divider(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)
         )
 
         NavigationDrawerItem(
@@ -248,12 +277,12 @@ private fun DrawerContent(
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CleanMinimalistAppBar(scope: CoroutineScope, drawerState: DrawerState) {
+private fun CleanMinimalistAppBar(scope: CoroutineScope, drawerState: DrawerState,bottomNavController: NavHostController) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Row(
             modifier = Modifier
@@ -270,7 +299,7 @@ private fun CleanMinimalistAppBar(scope: CoroutineScope, drawerState: DrawerStat
                 Icon(
                     Icons.Default.Menu,
                     contentDescription = "Menu",
-                    tint = Color(0xFF1A1A1A)
+                    tint = MaterialTheme.colorScheme.onBackground
                 )
             }
 
@@ -281,28 +310,28 @@ private fun CleanMinimalistAppBar(scope: CoroutineScope, drawerState: DrawerStat
                     fontWeight = FontWeight.Medium,
                     fontSize = 20.sp
                 ),
-                color = Color(0xFF1A1A1A)
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             // Notification icon
-            IconButton(
-                onClick = { },
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    Icons.Default.Notifications,
-                    contentDescription = "Notifications",
-                    tint = Color(0xFF1A1A1A)
-                )
+                IconButton(
+                    onClick = {bottomNavController.navigate("notifications")},
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Notifications,
+                        contentDescription = "Notifications",
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
             }
-        }
 
         // Bottom divider
         Divider(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter),
-            color = Color(0xFFEEEEEE),
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f),
             thickness = 1.dp
         )
     }
@@ -320,7 +349,7 @@ fun ModernBottomNavigation(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFF5F3FF))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
     ) {
         // Navigation items
         Row(
@@ -333,7 +362,7 @@ fun ModernBottomNavigation(
         ) {
             items.forEach { item ->
                 val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
-                val itemColor = if (selected) item.selectedColor else Color(0xFF9CA3AF)
+                val itemColor = if (selected) item.selectedColor else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -387,12 +416,11 @@ fun ModernBottomNavigation(
                 .fillMaxWidth()
                 .height(2.dp)
                 .align(Alignment.BottomCenter),
-            color = Color(0xFFDDDDDD),
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
             trackColor = Color.Transparent
         )
     }
 }
-
 
 @Composable
 fun WelcomeSection() {
@@ -406,7 +434,8 @@ fun WelcomeSection() {
             text = "Welcome to IIT Ropar's Guest House",
             style = MaterialTheme.typography.headlineMedium.copy(
                 fontWeight = FontWeight.Bold
-            )
+            ),
+            color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -416,14 +445,16 @@ fun WelcomeSection() {
             style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.SemiBold,
                 textDecoration = TextDecoration.Underline
-            )
+            ),
+            color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(8.dp))
 
         // Paragraph about the Guest House
         Text(
             text = "Nestled within the greenery of IIT Ropar's campus, the guest house offers a welcoming retreat for visitors. With its modern design blending seamlessly with the serene environment, it provides a comfortable and inviting atmosphere. Each room is well-appointed, combining tasteful decor with cozy furnishings for a relaxing stay. Whether guests are enjoying a peaceful walk through the gardens or focusing on academic endeavors, the guest house ensures a pleasant experience filled with comfort and hospitality.",
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -433,18 +464,19 @@ fun WelcomeSection() {
             style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.SemiBold,
                 textDecoration = TextDecoration.Underline
-            )
+            ),
+            color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(8.dp))
 
         // Paragraph about the Campus
         Text(
             text = "Nestled in the heart of Punjab's Rupnagar district, the campus of the Indian Institute of Technology, Ropar, is a blend of modern architecture and natural beauty spread across 500 acres. Walking through its green pathways, surrounded by lush trees and colorful flora, offers a sense of tranquility away from the outside world. The campus boasts sleek, contemporary buildings housing cutting-edge facilities for academics, research, and student life. Recreational spaces provide areas for students to relax and socialize amidst the serene surroundings. Sustainability efforts are evident throughout, showcasing a commitment to environmental conservation. From academic pursuits to cultural events, the campus buzzes with activity, creating a vibrant community where learning and growth thrive.",
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onBackground
         )
     }
 }
-
 
 @Composable
 fun HomeScreen(navController: NavHostController) {
@@ -473,7 +505,7 @@ fun HomeScreen(navController: NavHostController) {
     // Auto-scroll functionality
     LaunchedEffect(Unit) {
         while(true) {
-            kotlinx.coroutines.delay(2000) // 3 seconds delay before auto-scrolling
+            kotlinx.coroutines.delay(2000) // 2 seconds delay before auto-scrolling
             currentImageIndex = (currentImageIndex + 1) % imageResources.size
         }
     }
@@ -482,6 +514,7 @@ fun HomeScreen(navController: NavHostController) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
         // Image Carousel with actual images
@@ -578,7 +611,7 @@ fun HomeScreen(navController: NavHostController) {
                         .clip(RoundedCornerShape(4.dp))
                         .background(
                             if (index == currentImageIndex) MaterialTheme.colorScheme.primary
-                            else Color(0xFFD1D5DB)
+                            else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)
                         )
                         .clickable { currentImageIndex = index }
                 )
@@ -622,7 +655,11 @@ fun HomeScreen(navController: NavHostController) {
                 icon = Icons.Outlined.DateRange,
                 title = "Events",
                 description = "Conference halls & event spaces.",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.iitrpr.ac.in/about-iit-ropar"))
+                    context.startActivity(browserIntent)
+                }
             )
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -642,10 +679,6 @@ fun HomeScreen(navController: NavHostController) {
         }
 
         Spacer(modifier = Modifier.height(32.dp))
-
-        // Book Now button could be added here
-
-        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
@@ -663,7 +696,7 @@ fun FeatureCard(
             .clickable(onClick = onClick), // Make the entire card clickable
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF5F3FF)
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 0.dp
@@ -697,7 +730,8 @@ fun FeatureCard(
                 text = title,
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.SemiBold
-                )
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -706,17 +740,19 @@ fun FeatureCard(
                 text = description,
                 style = MaterialTheme.typography.bodySmall,
                 textAlign = TextAlign.Center,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
             )
         }
     }
 }
+
 // Add a stub for the ReservationFormScreen that was missing
 @Composable
 fun ReservationFormScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -725,14 +761,16 @@ fun ReservationFormScreen() {
             text = "Reservation Form",
             style = MaterialTheme.typography.headlineMedium.copy(
                 fontWeight = FontWeight.Bold
-            )
+            ),
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
             text = "This form will be implemented soon.",
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onBackground
         )
     }
 }
@@ -756,7 +794,6 @@ fun getImageTitle(index: Int): String {
         else -> "IIT Ropar Campus"
     }
 }
-
 @Composable
 fun FeatureCard(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
@@ -817,10 +854,9 @@ fun FeatureCard(
         }
     }
 }
-
 data class BottomNavItem(
     val route: String,
     val label: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val icon: ImageVector,
     val selectedColor: Color
 )
