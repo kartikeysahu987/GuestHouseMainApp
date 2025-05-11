@@ -92,7 +92,7 @@ fun SettingsScreen(bottomNavController: NavController,
                 SettingsItem(
                     icon = Icons.Default.Palette,
                     title = "Dark Theme",
-                    subtitle = if (isDarkTheme) "Currently enabled" else "Currently disabled",
+                    subtitle = if (isDarkTheme) "Enabled" else "Disabled",
                     hasToggle = true,
                     isToggleOn = isDarkTheme,  // Pass the current theme state
                     onClick = {

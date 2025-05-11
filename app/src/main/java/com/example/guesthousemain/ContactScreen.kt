@@ -279,7 +279,8 @@ fun ContactScreen() {
                                 val result = sendEmailWithCoroutine(
                                     recipient = recipientEmail,
                                     subject = subject,
-                                    messageBody = "From: $name\nReply Email: $email\n\n$message"
+                                    messageBody = "From: $name\nReply Email: $email\n\n$message",
+                                    displayName = selectedRecipient.displayName
                                 )
 
                                 infoMessage = result
@@ -340,7 +341,8 @@ fun validateInputs(
 suspend fun sendEmailWithCoroutine(
     recipient: String,
     subject: String,
-    messageBody: String
+    messageBody: String,
+    displayName: String
 ): String = withContext(Dispatchers.IO) {
     try {
         val properties = Properties().apply {
@@ -366,7 +368,7 @@ suspend fun sendEmailWithCoroutine(
             Transport.send(this)
         }
 
-        "Email sent successfully to ${recipient}!"
+        "Email sent successfully to $displayName!"
     } catch (e: Exception) {
         e.printStackTrace()
         "Failed to send email: ${e.localizedMessage ?: e.message ?: "Unknown error"}"
