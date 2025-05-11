@@ -42,19 +42,8 @@ import com.example.guesthousemain.ui.screens.*
 import com.example.guesthousemain.util.SessionManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.guesthousemain.NotificationScreen
 import com.example.guesthousemain.NotificationViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 @Composable
 fun GuestHouseApp(content: @Composable () -> Unit) {
@@ -154,7 +143,7 @@ fun MainPageScreen(globalNavController: NavHostController,notificationViewModel:
                         composable("contact") { ContactScreen() }
                         composable("reservation_form") { ReservationFormScreen() }
                         composable("notifications") {
-                            NotificationScreen(navigateBack = {globalNavController.popBackStack() },
+                            NotificationScreen(navigateBack = {bottomNavController.popBackStack() },
                                 viewModel = notificationViewModel
                             )
                         }

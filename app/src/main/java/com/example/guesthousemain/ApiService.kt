@@ -92,6 +92,30 @@ data class GoogleSignInRequest(@SerializedName("idToken") val idToken: String, @
 data class MailRequest(@SerializedName("to") val to: String, @SerializedName("subject") val subject: String, @SerializedName("body") val body: String)
 data class MailResponse(@SerializedName("message") val message: String)
 
+// Notification Data Classes
+data class Notification(
+    @SerializedName("_id")
+    val id: String?,
+    @SerializedName("sender")
+    val sender: String?,
+    @SerializedName("message")
+    val message: String?,
+    @SerializedName("res_id")
+    val resId: String?,
+    @SerializedName("createdAt")
+    val createdAt: String?
+)
+data class MarkAsReadRequest(
+    @SerializedName("notificationId")
+    val notificationId: String
+)
+
+data class MarkAsReadResponse(
+    @SerializedName("success")
+    val success: Boolean,
+    @SerializedName("message")
+    val message: String?
+)
 interface AuthService {
     @POST("auth/otp")
     fun sendOtp(@Body otpRequest: OtpRequest): Call<OtpResponse>
@@ -149,7 +173,26 @@ interface MailService {
     @POST("mail")
     fun sendMail(@Body mailRequest: MailRequest): Call<MailResponse>
 }
+interface NotificationService {
+    @GET("user/notifications")
+    fun getNotifications(
+        @Header("accessToken") accessToken: String,
+        @Header("refreshToken") refreshToken: String
+    ): Call<List<Notification>>
 
+    @POST("user/notifications/read")
+    fun markAsRead(
+        @Header("accessToken") accessToken: String,
+        @Header("refreshToken") refreshToken: String,
+        @Body request: MarkAsReadRequest
+    ): Call<MarkAsReadResponse>
+
+    @GET("user/notifications/unread")
+    fun getUnreadCount(
+        @Header("accessToken") accessToken: String,
+        @Header("refreshToken") refreshToken: String
+    ): Call<Map<String, Int>>
+}
 object ApiService {
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
@@ -167,4 +210,5 @@ object ApiService {
 
     val authService: AuthService = retrofit.create(AuthService::class.java)
     val mailService: MailService = retrofit.create(MailService::class.java)
+    val notificationService: NotificationService = retrofit.create(NotificationService::class.java)
 }

@@ -87,7 +87,7 @@ fun SettingsScreen(bottomNavController: NavController,
 
         // Preferences Settings
         SettingsSection(
-            title = "Preferences",
+            title = "Preference",
             items = listOf(
                 SettingsItem(
                     icon = Icons.Default.Palette,
@@ -102,12 +102,12 @@ fun SettingsScreen(bottomNavController: NavController,
                         }
                     }
                 ),
-                SettingsItem(
-                    icon = Icons.Default.Language,
-                    title = "Language",
-                    subtitle = "Select your preferred language",
-                    onClick = { /* Handle language selection */ }
-                )
+//                SettingsItem(
+//                    icon = Icons.Default.Language,
+//                    title = "Language",
+//                    subtitle = "Select your preferred language",
+//                    onClick = { /* Handle language selection */ }
+//                )
             )
         )
 
@@ -466,18 +466,18 @@ fun HelpSupportDialog(
                     onClick = onEmailSupportClick
                 )
 
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
-
-                SupportOption(
-                    icon = Icons.Default.Help,
-                    title = "FAQ",
-                    subtitle = "Frequently asked questions",
-                    onClick = {
-                        // Navigate to FAQ screen or open web page
-                        // For now, we'll just dismiss
-                        onDismiss()
-                    }
-                )
+//                Divider(modifier = Modifier.padding(vertical = 8.dp))
+//
+//                SupportOption(
+//                    icon = Icons.Default.Help,
+//                    title = "FAQ",
+//                    subtitle = "Frequently asked questions",
+//                    onClick = {
+//                        // Navigate to FAQ screen or open web page
+//                        // For now, we'll just dismiss
+//                        onDismiss()
+//                    }
+//                )
 
                 Divider(modifier = Modifier.padding(vertical = 8.dp))
 

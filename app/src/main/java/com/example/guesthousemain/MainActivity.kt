@@ -11,8 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -29,11 +32,13 @@ import com.example.guesthousemain.ui.screens.HomeScreen
 //import com.example.guesthousemain.ui.screens.ReservationFormScreen
 import com.example.guesthousemain.ui.theme.GuestHouseMainTheme
 import com.example.guesthousemain.util.SessionManager
+import androidx.compose.runtime.getValue
 
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val themeManager = ThemeManager(applicationContext)
         enableEdgeToEdge()
 
         // Load tokens from persistent storage into SessionManager.
@@ -44,20 +49,33 @@ class MainActivity : ComponentActivity() {
             "main" else "login"
 
         setContent {
-            GuestHouseMainTheme {
-                Scaffold { innerPadding ->
-                    Surface(modifier = Modifier.padding(innerPadding)) {
-                        AppNavigation(startDestination)
+            val isDarkTheme by themeManager.isDarkThemeFlow.collectAsState(initial = false)
+            val notificationViewModel: NotificationViewModel = viewModel()
+
+            notificationViewModel.initialize(
+                access = SessionManager.accessToken,
+                refresh = SessionManager.refreshToken,
+                dark = isDarkTheme
+            )
+            notificationViewModel.fetchNotifications()
+            notificationViewModel.fetchUnreadCount()
+            CompositionLocalProvider(LocalThemeManager provides themeManager) {
+                GuestHouseMainTheme(darkTheme = isDarkTheme) {
+                    Scaffold { innerPadding ->
+                        Surface(modifier = Modifier.padding(innerPadding)) {
+                            AppNavigation(startDestination,notificationViewModel)
+                        }
                     }
                 }
             }
         }
+
     }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun AppNavigation(startDestination: String) {
+fun AppNavigation(startDestination: String,notificationViewModel: NotificationViewModel) {
     val globalNavController = rememberNavController()
     NavHost(navController = globalNavController, startDestination = startDestination) {
         composable("login") {
@@ -78,7 +96,7 @@ fun AppNavigation(startDestination: String) {
             RegisterScreen(globalNavController, email)
         }
         composable("main") {
-            MainPageScreen(globalNavController)
+            MainPageScreen(globalNavController,notificationViewModel)
         }
         composable("reservation_form") {
             val context = LocalContext.current
